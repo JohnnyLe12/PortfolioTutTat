@@ -9,7 +9,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-export default function DashboardPage() {
+export default function DashBoardPage() {
   const recentProjects = [
     {
       id: 1,

@@ -6,7 +6,7 @@ import RootLayout from "../components/layout/RootLayout";
 import LandingPage from "../pages/LandingPage";
 import LoginPage from "../pages/LoginPage";
 import SignUpPage from "../pages/SignUpPage";
-import DashboardPage from "../pages/DashboardPage";
+import DashBoardPage from "../pages/DashBoardPage";
 import CompanyDashboardPage from "../pages/CompanyDashboardPage";
 import CreateProfilePage from "../pages/CreateProfilePage";
 
@@ -35,7 +35,7 @@ export default function AppRoutes() {
         <Route path="create-profile" element={<CreateProfilePage />} />
 
         {/* Dashboard */}
-        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="dashboard" element={<DashBoardPage />} />
         <Route
           path="company-dashboard"
           element={<CompanyDashboardPage />}
