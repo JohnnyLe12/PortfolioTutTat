@@ -1,0 +1,375 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  mentee
+  buddy
+  company
+  admin
+}
+
+enum Major {
+  Graphic_Design
+  UI_UX
+  Multimedia
+  Motion_Design
+}
+
+enum ProjectStatus {
+  draft
+  public
+  pending_feedback
+}
+
+enum MediaType {
+  image
+  video
+}
+
+enum FeedbackRequestStatus {
+  pending
+  in_review
+  completed
+}
+
+enum JobType {
+  internship
+  fresher
+  freelance
+  part_time
+  full_time
+}
+
+enum EmploymentType {
+  full_time
+  part_time
+  internship
+  contract
+  freelance
+  temporary
+  volunteer
+}
+
+enum SeniorityLevel {
+  internship
+  entry
+  assistant
+  mid_senior
+  director
+  executive
+}
+
+enum ApplicationStatus {
+  submitted
+  under_review
+  accepted
+  rejected
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         UserRole
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile              Profile?
+  buddyProfile         BuddyProfile?
+  companyProfile       CompanyProfile?
+  jobsPosted           Job[]
+  feedbackComments     FeedbackComment[]
+  feedbackHelpfulVotes FeedbackHelpfulVote[]
+  notifications        Notification[]
+  messagesSent         Message[]        @relation("MessagesSent")
+  messagesReceived     Message[]        @relation("MessagesReceived")
+
+  @@map("users")
+}
+
+model Profile {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @unique @map("user_id") @db.Uuid
+  fullName      String   @map("full_name") @db.VarChar(255)
+  roleTitle     String?  @map("role_title") @db.VarChar(255)
+  bio           String?  @db.Text
+  avatarUrl     String?  @map("avatar_url") @db.VarChar(500)
+  major         Major?
+  skills        String[]
+  designTools   String[] @map("design_tools")
+  interests     String[]
+  socialLinks   Json     @default("{}") @map("social_links")
+  completionPct Int      @default(0) @map("completion_pct") @db.SmallInt
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects              Project[]
+  feedbackRequestsSent  FeedbackRequest[]  @relation("MenteeFeedbackRequests")
+  feedbackRequestsBuddy FeedbackRequest[]  @relation("BuddyFeedbackRequests")
+  feedbacksGiven        Feedback[]
+  applications          Application[]
+  jobBookmarks          JobBookmark[]
+
+  @@map("profiles")
+}
+
+model Project {
+  id          String        @id @default(uuid()) @db.Uuid
+  menteeId    String        @map("mentee_id") @db.Uuid
+  title       String        @db.VarChar(255)
+  description String?       @db.Text
+  tags        String[]
+  status      ProjectStatus @default(draft)
+  viewCount   Int           @default(0) @map("view_count")
+  likeCount   Int           @default(0) @map("like_count")
+  isApproved  Boolean       @default(false) @map("is_approved")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  mentee             Profile             @relation(fields: [menteeId], references: [id], onDelete: Cascade)
+  media              ProjectMedia[]
+  feedbackRequests   FeedbackRequest[]
+  messages           Message[]
+  portfolioBookmarks PortfolioBookmark[]
+
+  @@map("projects")
+}
+
+model ProjectMedia {
+  id        String    @id @default(uuid()) @db.Uuid
+  projectId String    @map("project_id") @db.Uuid
+  url       String    @db.VarChar(500)
+  mediaType MediaType @map("media_type")
+  fileName  String?   @map("file_name") @db.VarChar(255)
+  fileSize  Int?      @map("file_size")
+  sortOrder Int       @default(0) @map("sort_order") @db.SmallInt
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_media")
+}
+
+model FeedbackRequest {
+  id        String                @id @default(uuid()) @db.Uuid
+  projectId String                @map("project_id") @db.Uuid
+  menteeId  String                @map("mentee_id") @db.Uuid
+  buddyId   String?               @map("buddy_id") @db.Uuid
+  note      String?               @db.Text
+  status    FeedbackRequestStatus @default(pending)
+  createdAt DateTime              @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime              @updatedAt @map("updated_at") @db.Timestamptz
+
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  mentee    Profile    @relation("MenteeFeedbackRequests", fields: [menteeId], references: [id])
+  buddy     Profile?   @relation("BuddyFeedbackRequests", fields: [buddyId], references: [id])
+  feedbacks Feedback[]
+
+  @@map("feedback_requests")
+}
+
+model Feedback {
+  id                String   @id @default(uuid()) @db.Uuid
+  feedbackRequestId String   @map("feedback_request_id") @db.Uuid
+  buddyId           String   @map("buddy_id") @db.Uuid
+  rating            Int      @db.SmallInt
+  comment           String   @db.Text
+  suggestions       String[]
+  helpfulCount      Int      @default(0) @map("helpful_count")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  feedbackRequest FeedbackRequest       @relation(fields: [feedbackRequestId], references: [id], onDelete: Cascade)
+  buddy           Profile               @relation(fields: [buddyId], references: [id])
+  comments        FeedbackComment[]
+  helpfulVotes    FeedbackHelpfulVote[]
+
+  @@map("feedbacks")
+}
+
+model FeedbackComment {
+  id         String   @id @default(uuid()) @db.Uuid
+  feedbackId String   @map("feedback_id") @db.Uuid
+  authorId   String   @map("author_id") @db.Uuid
+  content    String   @db.Text
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  feedback Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  author   User     @relation(fields: [authorId], references: [id])
+
+  @@map("feedback_comments")
+}
+
+model FeedbackHelpfulVote {
+  feedbackId String   @map("feedback_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  feedback Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([feedbackId, userId])
+  @@map("feedback_helpful_votes")
+}
+
+model Job {
+  id                  String          @id @default(uuid()) @db.Uuid
+  companyId           String          @map("company_id") @db.Uuid
+  title               String          @db.VarChar(255)
+  description         String?         @db.Text
+  responsibilities    String[]
+  requirements        String[]
+  requiredSkills      String[]        @map("required_skills")
+  jobType             JobType         @map("job_type")
+  location            String?         @db.VarChar(255)
+  isRemote            Boolean         @default(false) @map("is_remote")
+  salaryMin           Int?            @map("salary_min")
+  salaryMax           Int?            @map("salary_max")
+  salaryCurrency      String          @default("USD") @map("salary_currency") @db.VarChar(10)
+  experienceLevel     String          @default("entry") @map("experience_level") @db.VarChar(20)
+  isActive            Boolean         @default(true) @map("is_active")
+  openSlots           Int?            @map("open_slots")
+  employmentType      EmploymentType? @map("employment_type")
+  seniorityLevel      SeniorityLevel? @map("seniority_level")
+  minExperienceYears  Int?            @map("min_experience_years")
+  requiresManagement  Boolean         @default(false) @map("requires_management")
+  minManagedEmployees Int?            @map("min_managed_employees")
+  salaryPeriod        String?         @map("salary_period") @db.VarChar(20)
+  category            String?         @db.VarChar(100)
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  company      User          @relation(fields: [companyId], references: [id])
+  applications Application[]
+  bookmarks    JobBookmark[]
+
+  @@map("jobs")
+}
+
+model Application {
+  id           String            @id @default(uuid()) @db.Uuid
+  jobId        String            @map("job_id") @db.Uuid
+  menteeId     String            @map("mentee_id") @db.Uuid
+  portfolioIds String[]          @map("portfolio_ids") @db.Uuid
+  status       ApplicationStatus @default(submitted)
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  job    Job     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  mentee Profile @relation(fields: [menteeId], references: [id])
+
+  @@unique([jobId, menteeId])
+  @@map("applications")
+}
+
+model JobBookmark {
+  jobId     String   @map("job_id") @db.Uuid
+  menteeId  String   @map("mentee_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  job    Job     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  mentee Profile @relation(fields: [menteeId], references: [id], onDelete: Cascade)
+
+  @@id([jobId, menteeId])
+  @@map("job_bookmarks")
+}
+
+model Notification {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  type       String   @db.VarChar(50)
+  title      String   @db.VarChar(255)
+  body       String?  @db.Text
+  entityType String?  @map("entity_type") @db.VarChar(50)
+  entityId   String?  @map("entity_id") @db.Uuid
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model BuddyProfile {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @unique @map("user_id") @db.Uuid
+  fullName      String   @map("full_name") @db.VarChar(255)
+  roleTitle     String   @map("role_title") @db.VarChar(255)
+  bio           String?  @db.Text
+  avatarUrl     String?  @map("avatar_url") @db.VarChar(500)
+  major         Major?
+  skills        String[]
+  designTools   String[] @map("design_tools")
+  interests     String[]
+  socialLinks   Json     @default("{}") @map("social_links")
+  completionPct Int      @default(0) @map("completion_pct") @db.SmallInt
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portfolioBookmarks PortfolioBookmark[]
+
+  @@map("buddy_profiles")
+}
+
+model CompanyProfile {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @unique @map("user_id") @db.Uuid
+  companyName      String   @map("company_name") @db.VarChar(255)
+  summary          String?  @db.Text
+  productsServices String?  @map("products_services") @db.Text
+  websiteUrl       String?  @map("website_url") @db.VarChar(500)
+  hrContactEmail   String?  @map("hr_contact_email") @db.VarChar(255)
+  hrContactPhone   String?  @map("hr_contact_phone") @db.VarChar(50)
+  employeeCount    String?  @map("employee_count") @db.VarChar(50)
+  officeAddress    String?  @map("office_address") @db.Text
+  referenceLinks   Json     @default("[]") @map("reference_links")
+  teamMembers      Json     @default("[]") @map("team_members")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("company_profiles")
+}
+
+model Message {
+  id                 String   @id @default(uuid()) @db.Uuid
+  senderId           String   @map("sender_id") @db.Uuid
+  receiverId         String   @map("receiver_id") @db.Uuid
+  content            String   @db.Text
+  portfolioContextId String?  @map("portfolio_context_id") @db.Uuid
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  sender   User     @relation("MessagesSent", fields: [senderId], references: [id])
+  receiver User     @relation("MessagesReceived", fields: [receiverId], references: [id])
+  project  Project? @relation(fields: [portfolioContextId], references: [id], onDelete: SetNull)
+
+  @@index([senderId, receiverId])
+  @@index([portfolioContextId])
+  @@map("messages")
+}
+
+model PortfolioBookmark {
+  id        String   @id @default(uuid()) @db.Uuid
+  buddyId   String   @map("buddy_id") @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  buddy   BuddyProfile @relation(fields: [buddyId], references: [id], onDelete: Cascade)
+  project Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([buddyId, projectId])
+  @@map("portfolio_bookmarks")
+}

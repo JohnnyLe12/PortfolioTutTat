@@ -1,0 +1,15 @@
+{
+  "/api/auth/register/route": "app/api/auth/register/route.js",
+  "/api/notifications/unread-count/route": "app/api/notifications/unread-count/route.js",
+  "/api/buddy/dashboard/stats/route": "app/api/buddy/dashboard/stats/route.js",
+  "/api/buddy/portfolios/browse/route": "app/api/buddy/portfolios/browse/route.js",
+  "/api/buddy/workspace/route": "app/api/buddy/workspace/route.js",
+  "/api/company/profile/me/route": "app/api/company/profile/me/route.js",
+  "/api/company/jobs/route": "app/api/company/jobs/route.js",
+  "/api/notifications/route": "app/api/notifications/route.js",
+  "/api/projects/route": "app/api/projects/route.js",
+  "/api/profiles/me/stats/route": "app/api/profiles/me/stats/route.js",
+  "/api/profiles/me/route": "app/api/profiles/me/route.js",
+  "/api/jobs/recommended/route": "app/api/jobs/recommended/route.js",
+  "/api/company/dashboard/stats/route": "app/api/company/dashboard/stats/route.js"
+}
