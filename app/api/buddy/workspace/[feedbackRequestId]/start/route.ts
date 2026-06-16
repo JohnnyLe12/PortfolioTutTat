@@ -60,30 +60,45 @@ export async function PATCH(
       )
     }
 
-    // Verify this feedback request is assigned to this buddy
-    if (feedbackRequest.buddyId !== buddyProfile.id) {
-      return errorResponse(
-        'Feedback request not found',
-        404,
-        'NOT_FOUND'
-      )
+    // Verify buddy has bookmarked this project (authorization check)
+    const buddyBProfile = await prisma.buddyProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    })
+
+    if (buddyBProfile) {
+      const bookmark = await prisma.portfolioBookmark.findUnique({
+        where: {
+          buddyId_projectId: {
+            buddyId: buddyBProfile.id,
+            projectId: feedbackRequest.project.id,
+          },
+        },
+      })
+      if (!bookmark) {
+        return errorResponse('Feedback request not found', 404, 'NOT_FOUND')
+      }
     }
 
     // Validate state transition: only pending → in_review is allowed
     if (feedbackRequest.status !== 'pending') {
       return errorResponse(
-        `Invalid state transition: cannot start review from '${feedbackRequest.status}' state. FeedbackRequest must be in 'pending' state.`,
+        `Invalid state transition: cannot start review from '${feedbackRequest.status}' state.`,
         422,
         'INVALID_STATE_TRANSITION'
       )
     }
 
-    // Perform transition and create notification in a transaction
+    // Perform transition: change status + notify mentee
     const updated = await prisma.$transaction(async (tx) => {
-      // Update FeedbackRequest status to in_review
+      // Update FeedbackRequest status to in_review (leave buddyId as-is or set if Profile exists)
+      const updateData: { status: 'in_review'; buddyId?: string } = { status: 'in_review' }
+      if (buddyProfile) {
+        updateData.buddyId = buddyProfile.id
+      }
       const updatedRequest = await tx.feedbackRequest.update({
         where: { id: feedbackRequestId },
-        data: { status: 'in_review' },
+        data: updateData,
       })
 
       // Create notification for the mentee

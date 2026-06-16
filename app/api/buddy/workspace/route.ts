@@ -73,10 +73,14 @@ export async function GET(req: NextRequest) {
     })
 
     // Re-fetch with correct buddy profile ID for feedback requests
+    // Also look for unassigned (buddyId = null) feedback requests on bookmarked projects
     const workspaceItems = await Promise.all(
       bookmarks.map(async (bookmark) => {
-        // Get the most recent FeedbackRequest for this project assigned to this buddy
+        // Get the most recent FeedbackRequest for this project
+        // Either assigned to this buddy OR unassigned (pending)
         let feedbackRequest = null
+
+        // First try to find one assigned to this buddy
         if (buddyMenteeProfile) {
           feedbackRequest = await prisma.feedbackRequest.findFirst({
             where: {
@@ -84,6 +88,19 @@ export async function GET(req: NextRequest) {
               buddyId: buddyMenteeProfile.id,
             },
             orderBy: { updatedAt: 'desc' },
+            select: { id: true, status: true },
+          })
+        }
+
+        // If none assigned, look for unassigned pending requests
+        if (!feedbackRequest) {
+          feedbackRequest = await prisma.feedbackRequest.findFirst({
+            where: {
+              projectId: bookmark.project.id,
+              buddyId: null,
+              status: 'pending',
+            },
+            orderBy: { createdAt: 'desc' },
             select: { id: true, status: true },
           })
         }

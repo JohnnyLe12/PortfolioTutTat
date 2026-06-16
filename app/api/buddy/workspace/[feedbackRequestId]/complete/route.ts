@@ -48,25 +48,21 @@ async function handleComplete(
       // No body is OK for backward compatibility
     }
 
-    // Get the buddy's Profile record
-    const buddyProfile = await prisma.buddyProfile.findUnique({
+    // Get the buddy's Profile record (FeedbackRequest.buddyId references Profile.id)
+    const profile = await prisma.profile.findUnique({
       where: { userId },
       select: { id: true },
     })
 
-    // Fallback to regular profile if buddyProfile not found
-    let buddyId: string
-    if (buddyProfile) {
-      buddyId = buddyProfile.id
-    } else {
-      const profile = await prisma.profile.findUnique({
-        where: { userId },
-        select: { id: true },
-      })
-      if (!profile) {
-        return errorResponse('Profile not found.', 404, 'NOT_FOUND')
-      }
-      buddyId = profile.id
+    // Get BuddyProfile for bookmark verification
+    const buddyBProfile = await prisma.buddyProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    })
+
+    const buddyId = profile?.id || buddyBProfile?.id
+    if (!buddyId) {
+      return errorResponse('Profile not found.', 404, 'NOT_FOUND')
     }
 
     // Find the FeedbackRequest
@@ -86,8 +82,21 @@ async function handleComplete(
       return errorResponse('Feedback request not found', 404, 'NOT_FOUND')
     }
 
-    // Verify this feedback request is assigned to this buddy
-    if (feedbackRequest.buddyId !== buddyId) {
+    // Verify this buddy has access (via bookmark or assignment)
+    if (buddyBProfile) {
+      const bookmark = await prisma.portfolioBookmark.findUnique({
+        where: {
+          buddyId_projectId: {
+            buddyId: buddyBProfile.id,
+            projectId: feedbackRequest.project.id,
+          },
+        },
+      })
+      // Allow if bookmarked OR if assigned
+      if (!bookmark && feedbackRequest.buddyId !== buddyId) {
+        return errorResponse('Feedback request not found', 404, 'NOT_FOUND')
+      }
+    } else if (feedbackRequest.buddyId !== buddyId) {
       return errorResponse('Feedback request not found', 404, 'NOT_FOUND')
     }
 
