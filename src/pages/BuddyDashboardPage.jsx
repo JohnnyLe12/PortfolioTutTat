@@ -26,12 +26,23 @@ export default function BuddyDashboardPage() {
     helpfulRating: 0.0,
   });
   const [recentItems, setRecentItems] = useState([]);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchDashboardStats();
+    fetchProfile();
   }, []);
+
+  async function fetchProfile() {
+    try {
+      const response = await apiGet("/buddy/profile/me");
+      setProfile(response.data || response);
+    } catch (err) {
+      console.error("Failed to fetch buddy profile:", err);
+    }
+  }
 
   async function fetchDashboardStats() {
     try {
@@ -108,12 +119,44 @@ export default function BuddyDashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
+      {/* Header with Profile Info */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Buddy Dashboard</h1>
-        <p className="text-gray-600">
-          Track your review activity and stay on top of feedback requests
-        </p>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold overflow-hidden">
+            {profile?.avatarUrl ? (
+              <img
+                src={profile.avatarUrl}
+                alt="Profile avatar"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              profile?.fullName
+                ? profile.fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+                : "BD"
+            )}
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold">{profile?.fullName || "Buddy Dashboard"}</h1>
+            {profile?.roleTitle && (
+              <p className="text-gray-600">{profile.roleTitle}</p>
+            )}
+            {!profile?.roleTitle && (
+              <p className="text-gray-600">
+                Track your review activity and stay on top of feedback requests
+              </p>
+            )}
+          </div>
+        </div>
+        {profile?.bio && (
+          <p className="text-gray-600 text-sm mb-2">{profile.bio}</p>
+        )}
+        {profile?.skills && profile.skills.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {profile.skills.map((skill, i) => (
+              <Badge key={i} variant="secondary">{skill}</Badge>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Error State */}

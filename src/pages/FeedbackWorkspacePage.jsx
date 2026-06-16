@@ -4,14 +4,16 @@ import {
   ClipboardList,
   Play,
   CheckCircle2,
+  XCircle,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 
-import { apiGet, apiPatch } from "../lib/api";
+import { apiGet, apiPatch, apiPost } from "../lib/api";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
+import { Textarea } from "../components/ui/textarea";
 import ChatPanel from "../components/ChatPanel";
 
 const STATUS_CONFIG = {
@@ -217,9 +219,41 @@ function WorkspaceItem({
   onStartReview,
   onCompleteReview,
 }) {
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState(null); // 'pass' or 'fail'
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [feedbackError, setFeedbackError] = useState("");
+
   const statusConfig = STATUS_CONFIG[item.reviewStatus] || STATUS_CONFIG["Not Started"];
   const isActionLoading = actionLoading === item.feedbackRequestId;
   const isInReview = item.reviewStatus === "In Progress";
+
+  async function handleSubmitFeedback() {
+    if (!feedbackRating) return;
+    if (feedbackRating === 'fail' && !feedbackComment.trim()) {
+      setFeedbackError("Please provide a reason for not passing the portfolio.");
+      return;
+    }
+
+    setSubmittingFeedback(true);
+    setFeedbackError("");
+    try {
+      // Submit feedback
+      await apiPost(`/buddy/workspace/${item.feedbackRequestId}/complete`, {
+        rating: feedbackRating === 'pass' ? 5 : 2,
+        comment: feedbackComment.trim() || (feedbackRating === 'pass' ? 'Portfolio approved' : ''),
+        passed: feedbackRating === 'pass',
+      });
+      setShowFeedbackForm(false);
+      // Trigger parent refresh
+      onCompleteReview(item.feedbackRequestId);
+    } catch (err) {
+      setFeedbackError(err.message || "Failed to submit feedback");
+    } finally {
+      setSubmittingFeedback(false);
+    }
+  }
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -261,27 +295,88 @@ function WorkspaceItem({
               </Button>
             )}
 
-            {/* Complete Review button - only for In Progress items */}
-            {isInReview && item.feedbackRequestId && (
+            {/* Give Feedback button - for In Progress items */}
+            {isInReview && item.feedbackRequestId && !showFeedbackForm && (
               <Button
                 size="sm"
-                onClick={() => onCompleteReview(item.feedbackRequestId)}
-                disabled={isActionLoading}
+                onClick={() => setShowFeedbackForm(true)}
                 className="bg-green-600 hover:bg-green-700 text-white"
               >
-                {isActionLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                ) : (
-                  <CheckCircle2 className="w-4 h-4 mr-1" />
-                )}
-                Complete Review
+                <CheckCircle2 className="w-4 h-4 mr-1" />
+                Give Feedback
               </Button>
             )}
           </div>
         </div>
 
+        {/* Feedback Form */}
+        {showFeedbackForm && (
+          <div className="mt-4 border-t pt-4 space-y-4">
+            <h4 className="font-medium text-gray-900">Review this portfolio</h4>
+            
+            {/* Pass/Fail buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant={feedbackRating === 'pass' ? 'default' : 'outline'}
+                className={feedbackRating === 'pass' ? 'bg-green-600 hover:bg-green-700' : 'border-green-600 text-green-600 hover:bg-green-50'}
+                onClick={() => { setFeedbackRating('pass'); setFeedbackError(""); }}
+              >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Pass
+              </Button>
+              <Button
+                variant={feedbackRating === 'fail' ? 'default' : 'outline'}
+                className={feedbackRating === 'fail' ? 'bg-red-600 hover:bg-red-700' : 'border-red-600 text-red-600 hover:bg-red-50'}
+                onClick={() => { setFeedbackRating('fail'); setFeedbackError(""); }}
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                Needs Improvement
+              </Button>
+            </div>
+
+            {/* Comment textarea (required for fail) */}
+            {feedbackRating && (
+              <div>
+                <Textarea
+                  placeholder={feedbackRating === 'fail' ? "Please explain what needs to be improved (required)..." : "Add optional comments..."}
+                  value={feedbackComment}
+                  onChange={(e) => setFeedbackComment(e.target.value)}
+                  className="min-h-[100px]"
+                />
+                {feedbackRating === 'fail' && (
+                  <p className="text-xs text-gray-500 mt-1">* Required when portfolio does not pass</p>
+                )}
+              </div>
+            )}
+
+            {feedbackError && (
+              <p className="text-sm text-red-600">{feedbackError}</p>
+            )}
+
+            {/* Submit / Cancel */}
+            <div className="flex gap-3">
+              <Button
+                onClick={handleSubmitFeedback}
+                disabled={!feedbackRating || submittingFeedback}
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                {submittingFeedback ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                Submit Feedback
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => { setShowFeedbackForm(false); setFeedbackRating(null); setFeedbackComment(""); setFeedbackError(""); }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* ChatPanel - embedded when review is In Progress */}
-        {isInReview && item.feedbackRequestId && currentUserId && (
+        {isInReview && item.feedbackRequestId && currentUserId && !showFeedbackForm && (
           <div className="mt-4 border-t pt-4">
             <ChatPanel
               portfolioContextId={item.projectId}

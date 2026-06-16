@@ -51,6 +51,15 @@ export async function GET(
       }
     }
 
+    // Increment view count for non-owners
+    if (project.mentee.userId !== userId) {
+      await prisma.project.update({
+        where: { id },
+        data: { viewCount: { increment: 1 } },
+      })
+      project.viewCount += 1
+    }
+
     return successResponse(project)
   } catch (err) {
     console.error('[GET /api/projects/:id]', err)

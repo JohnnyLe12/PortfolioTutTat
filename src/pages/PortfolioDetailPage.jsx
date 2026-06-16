@@ -604,14 +604,44 @@ export default function PortfolioDetailPage() {
             </div>
           )}
 
-          {/* Non-owner: Request Feedback button */}
-          {!isOwner && !isEditing && (
+          {/* Non-owner mentee: Request Feedback button */}
+          {!isOwner && !isEditing && user?.role === 'mentee' && (
             <Button
               className="bg-indigo-600 hover:bg-indigo-700 h-11 px-6 font-semibold shadow-lg mb-8"
               onClick={openFeedbackDialog}
             >
               <MessageSquare className="h-4 w-4 mr-2" />
               Request Feedback
+            </Button>
+          )}
+
+          {/* Buddy: Accept Review button */}
+          {!isOwner && !isEditing && user?.role === 'buddy' && project.status === 'pending_feedback' && (
+            <Button
+              className="bg-green-600 hover:bg-green-700 h-11 px-6 font-semibold shadow-lg mb-8"
+              onClick={async () => {
+                try {
+                  // Find the pending feedback request for this project and start review
+                  const result = await apiGet('/buddy/workspace');
+                  const requests = result.data || [];
+                  const pendingRequest = requests.find(
+                    (r) => r.projectId === id && r.status === 'pending'
+                  );
+                  if (pendingRequest) {
+                    await apiPatch(`/buddy/workspace/${pendingRequest.id}/start`, {});
+                    await fetchProject();
+                  } else {
+                    // Bookmark and accept
+                    await apiPost('/buddy/portfolios/bookmark', { projectId: id });
+                    await fetchProject();
+                  }
+                } catch (err) {
+                  setError(err.message || 'Failed to accept review');
+                }
+              }}
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Accept Review
             </Button>
           )}
         </div>
@@ -791,7 +821,23 @@ export default function PortfolioDetailPage() {
                 <Button
                   variant={liked ? "default" : "outline"}
                   className="w-full h-11 border-2"
-                  onClick={() => setLiked(!liked)}
+                  onClick={async () => {
+                    try {
+                      if (liked) {
+                        const result = await apiDelete(`/projects/${id}/like`);
+                        const data = result.data || result;
+                        setProject((prev) => ({ ...prev, likeCount: data.likeCount }));
+                        setLiked(false);
+                      } else {
+                        const result = await apiPost(`/projects/${id}/like`, {});
+                        const data = result.data || result;
+                        setProject((prev) => ({ ...prev, likeCount: data.likeCount }));
+                        setLiked(true);
+                      }
+                    } catch (err) {
+                      console.error('Like failed:', err);
+                    }
+                  }}
                 >
                   <Heart
                     className={`h-4 w-4 mr-2 ${liked ? "fill-current" : ""}`}
@@ -799,15 +845,40 @@ export default function PortfolioDetailPage() {
                   {liked ? "Liked" : "Like Project"}
                 </Button>
 
-                {/* Request Feedback */}
-                <Button
-                  variant="outline"
-                  className="w-full h-11 border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50"
-                  onClick={openFeedbackDialog}
-                >
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Get Feedback
-                </Button>
+                {/* Request Feedback (only for owner/mentee) */}
+                {(isOwner || user?.role === 'mentee') && (
+                  <Button
+                    variant="outline"
+                    className="w-full h-11 border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                    onClick={openFeedbackDialog}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Get Feedback
+                  </Button>
+                )}
+
+                {/* Bookmark for buddy */}
+                {user?.role === 'buddy' && (
+                  <Button
+                    variant="outline"
+                    className="w-full h-11 border-2 border-green-600 text-green-600 hover:bg-green-50"
+                    onClick={async () => {
+                      try {
+                        await apiPost('/buddy/portfolios/bookmark', { projectId: id });
+                        alert('Portfolio bookmarked!');
+                      } catch (err) {
+                        if (err.status === 409) {
+                          alert('Already bookmarked');
+                        } else {
+                          setError(err.message || 'Failed to bookmark');
+                        }
+                      }
+                    }}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Bookmark Portfolio
+                  </Button>
+                )}
               </div>
             </div>
           </div>

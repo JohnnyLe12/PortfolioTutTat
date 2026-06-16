@@ -5,18 +5,32 @@ import { requireRole } from '@/lib/role-guard'
 
 /**
  * PATCH /api/buddy/workspace/:feedbackRequestId/complete
+ * POST /api/buddy/workspace/:feedbackRequestId/complete
  *
  * Transition a FeedbackRequest from in_review to completed.
- * Also sets the associated project's isApproved=true.
+ * Accepts optional body: { rating, comment, passed }
+ * Creates a Feedback record with the buddy's review.
  * Creates a notification for the mentee.
  *
  * Valid transition: in_review → completed
- * Returns 422 INVALID_STATE_TRANSITION if not in in_review state.
- * Returns 404 NOT_FOUND if feedbackRequest doesn't exist or doesn't belong to this buddy.
  */
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ feedbackRequestId: string }> }
+) {
+  return handleComplete(req, params)
+}
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ feedbackRequestId: string }> }
+) {
+  return handleComplete(req, params)
+}
+
+async function handleComplete(
+  req: NextRequest,
+  params: Promise<{ feedbackRequestId: string }>
 ) {
   try {
     // Role guard: only buddy (and admin) can access
@@ -26,18 +40,33 @@ export async function PATCH(
 
     const { feedbackRequestId } = await params
 
-    // Get the buddy's Profile record (FeedbackRequest.buddyId references Profile.id)
-    const buddyProfile = await prisma.profile.findUnique({
+    // Parse optional body
+    let body: { rating?: number; comment?: string; passed?: boolean } = {}
+    try {
+      body = await req.json()
+    } catch {
+      // No body is OK for backward compatibility
+    }
+
+    // Get the buddy's Profile record
+    const buddyProfile = await prisma.buddyProfile.findUnique({
       where: { userId },
       select: { id: true },
     })
 
-    if (!buddyProfile) {
-      return errorResponse(
-        'Profile not found. Please create a profile first.',
-        404,
-        'NOT_FOUND'
-      )
+    // Fallback to regular profile if buddyProfile not found
+    let buddyId: string
+    if (buddyProfile) {
+      buddyId = buddyProfile.id
+    } else {
+      const profile = await prisma.profile.findUnique({
+        where: { userId },
+        select: { id: true },
+      })
+      if (!profile) {
+        return errorResponse('Profile not found.', 404, 'NOT_FOUND')
+      }
+      buddyId = profile.id
     }
 
     // Find the FeedbackRequest
@@ -54,32 +83,28 @@ export async function PATCH(
     })
 
     if (!feedbackRequest) {
-      return errorResponse(
-        'Feedback request not found',
-        404,
-        'NOT_FOUND'
-      )
+      return errorResponse('Feedback request not found', 404, 'NOT_FOUND')
     }
 
     // Verify this feedback request is assigned to this buddy
-    if (feedbackRequest.buddyId !== buddyProfile.id) {
-      return errorResponse(
-        'Feedback request not found',
-        404,
-        'NOT_FOUND'
-      )
+    if (feedbackRequest.buddyId !== buddyId) {
+      return errorResponse('Feedback request not found', 404, 'NOT_FOUND')
     }
 
     // Validate state transition: only in_review → completed is allowed
     if (feedbackRequest.status !== 'in_review') {
       return errorResponse(
-        `Invalid state transition: cannot complete review from '${feedbackRequest.status}' state. FeedbackRequest must be in 'in_review' state.`,
+        `Invalid state transition: cannot complete review from '${feedbackRequest.status}' state.`,
         422,
         'INVALID_STATE_TRANSITION'
       )
     }
 
-    // Perform transition, set isApproved, and create notification in a transaction
+    const passed = body.passed !== false
+    const rating = body.rating || (passed ? 5 : 2)
+    const comment = body.comment || (passed ? 'Portfolio approved' : 'Needs improvement')
+
+    // Perform transition + create feedback record in transaction
     const updated = await prisma.$transaction(async (tx) => {
       // Update FeedbackRequest status to completed
       const updatedRequest = await tx.feedbackRequest.update({
@@ -87,19 +112,35 @@ export async function PATCH(
         data: { status: 'completed' },
       })
 
-      // Set the associated project's isApproved to true (Requirement 13.1)
-      await tx.project.update({
-        where: { id: feedbackRequest.project.id },
-        data: { isApproved: true },
+      // Create Feedback record
+      await tx.feedback.create({
+        data: {
+          feedbackRequestId,
+          buddyId,
+          rating,
+          comment,
+          suggestions: passed ? [] : [comment],
+        },
       })
 
-      // Create notification for the mentee
+      // Set project isApproved based on pass/fail
+      await tx.project.update({
+        where: { id: feedbackRequest.project.id },
+        data: {
+          isApproved: passed,
+          status: 'public',
+        },
+      })
+
+      // Notify the mentee
       await tx.notification.create({
         data: {
           userId: feedbackRequest.mentee.userId,
           type: 'feedback_request_completed',
-          title: 'Review completed',
-          body: `Your project "${feedbackRequest.project.title}" has been reviewed and approved by a buddy.`,
+          title: passed ? 'Portfolio approved!' : 'Feedback received',
+          body: passed
+            ? `Your project "${feedbackRequest.project.title}" has been approved by a buddy.`
+            : `Your project "${feedbackRequest.project.title}" received feedback. Please review the suggestions.`,
           entityType: 'feedback_request',
           entityId: feedbackRequestId,
         },
@@ -110,7 +151,7 @@ export async function PATCH(
 
     return successResponse(updated)
   } catch (err) {
-    console.error('[PATCH /api/buddy/workspace/:feedbackRequestId/complete]', err)
+    console.error('[/api/buddy/workspace/:feedbackRequestId/complete]', err)
     return errorResponse('Internal server error', 500, 'INTERNAL_ERROR')
   }
 }
