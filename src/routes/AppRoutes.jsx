@@ -31,6 +31,7 @@ import JobCreationPage from "../pages/JobCreationPage";
 import ApplicantsTrackerPage from "../pages/ApplicantsTrackerPage";
 import AdvancedJobSearchPage from "../pages/AdvancedJobSearchPage";
 import BuddyProfilePage from "../pages/BuddyProfilePage";
+import SettingsPage from "../pages/SettingsPage";
 import NotFoundPage from "../pages/NotFoundPage";
 
 export default function AppRoutes() {
@@ -70,6 +71,9 @@ export default function AppRoutes() {
 
           {/* Buddy Profile (viewable by any authenticated user) */}
           <Route path="buddy-profile/:userId" element={<BuddyProfilePage />} />
+
+          {/* Settings */}
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
 
         {/* Buddy-only routes (buddy + admin) */}

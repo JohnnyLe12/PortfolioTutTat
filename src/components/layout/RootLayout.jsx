@@ -136,7 +136,7 @@ export default function RootLayout() {
 
               <div className="pt-4 mt-4 border-t space-y-2">
                 <SidebarLink
-                  to="#"
+                  to="/settings"
                   icon={<Settings />}
                   text="Settings"
                 />
