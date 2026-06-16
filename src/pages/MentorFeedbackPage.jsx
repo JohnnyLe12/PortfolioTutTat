@@ -427,21 +427,6 @@ export default function MentorFeedbackPage() {
             </Card>
           )}
 
-          {/* Update Project */}
-          <Card className="border-2 bg-gradient-to-br from-green-50 to-emerald-50">
-            <CardContent className="p-6">
-              <h3 className="font-bold text-gray-900 mb-3">Ready to Update?</h3>
-              <p className="text-sm text-gray-700 mb-4">
-                Apply the mentor feedback to improve your portfolio and make it
-                stand out
-              </p>
-              <Link to="/portfolio/builder">
-                <Button className="w-full h-10 bg-green-600 hover:bg-green-700 font-semibold">
-                  Update Project
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

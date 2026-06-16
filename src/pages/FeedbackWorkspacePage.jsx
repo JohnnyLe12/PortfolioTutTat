@@ -9,6 +9,8 @@ import {
   ChevronRight,
   ArrowLeft,
   MessageSquare,
+  Star,
+  Eye,
 } from "lucide-react";
 
 import { apiGet, apiPatch, apiPost } from "../lib/api";
@@ -33,15 +35,13 @@ export default function FeedbackWorkspacePage() {
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
-  const [activeReview, setActiveReview] = useState(null); // item being reviewed
+  const [activeReview, setActiveReview] = useState(null);
+  const [viewingCompleted, setViewingCompleted] = useState(null);
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem("user");
-      if (stored) {
-        const userData = JSON.parse(stored);
-        setCurrentUserId(userData.id);
-      }
+      if (stored) setCurrentUserId(JSON.parse(stored).id);
     } catch { /* ignore */ }
   }, []);
 
@@ -66,9 +66,7 @@ export default function FeedbackWorkspacePage() {
     setActionLoading(item.feedbackRequestId);
     try {
       await apiPatch(`/buddy/workspace/${item.feedbackRequestId}/start`, {});
-      // Open review view immediately
       setActiveReview({ ...item, reviewStatus: "In Progress" });
-      // Also refresh list in background
       fetchWorkspace(pagination.page);
     } catch (err) {
       setError(err.message || "Failed to start review");
@@ -77,30 +75,25 @@ export default function FeedbackWorkspacePage() {
     }
   }
 
-  function handleOpenReview(item) {
-    setActiveReview(item);
-  }
-
   function handleBackToList() {
     setActiveReview(null);
+    setViewingCompleted(null);
     fetchWorkspace(pagination.page);
   }
 
   // ─── Active Review View ─────────────────────────────────────────────
   if (activeReview) {
-    return (
-      <ReviewView
-        item={activeReview}
-        currentUserId={currentUserId}
-        onBack={handleBackToList}
-      />
-    );
+    return <ReviewView item={activeReview} currentUserId={currentUserId} onBack={handleBackToList} />;
+  }
+
+  // ─── Viewing Completed Review ───────────────────────────────────────
+  if (viewingCompleted) {
+    return <CompletedReviewView item={viewingCompleted} currentUserId={currentUserId} onBack={handleBackToList} />;
   }
 
   // ─── Workspace List View ────────────────────────────────────────────
   return (
     <div className="container mx-auto px-6 py-8 max-w-5xl">
-      {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
           <ClipboardList className="w-5 h-5 text-indigo-600" />
@@ -146,32 +139,22 @@ export default function FeedbackWorkspacePage() {
                         {item.reviewStatus}
                       </Badge>
 
-                      {/* Not Started + has feedback request → Start Review */}
                       {item.reviewStatus === "Not Started" && item.feedbackRequestId && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleStartReview(item)}
-                          disabled={actionLoading === item.feedbackRequestId}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                        >
-                          {actionLoading === item.feedbackRequestId ? (
-                            <Loader2 className="w-4 h-4 animate-spin mr-1" />
-                          ) : (
-                            <Play className="w-4 h-4 mr-1" />
-                          )}
+                        <Button size="sm" onClick={() => handleStartReview(item)} disabled={actionLoading === item.feedbackRequestId} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                          {actionLoading === item.feedbackRequestId ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Play className="w-4 h-4 mr-1" />}
                           Start Review
                         </Button>
                       )}
 
-                      {/* In Progress → Open Review */}
                       {item.reviewStatus === "In Progress" && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleOpenReview(item)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white"
-                        >
-                          <MessageSquare className="w-4 h-4 mr-1" />
-                          Continue Review
+                        <Button size="sm" onClick={() => setActiveReview(item)} className="bg-blue-600 hover:bg-blue-700 text-white">
+                          <MessageSquare className="w-4 h-4 mr-1" /> Continue Review
+                        </Button>
+                      )}
+
+                      {item.reviewStatus === "Completed" && (
+                        <Button size="sm" variant="outline" onClick={() => setViewingCompleted(item)}>
+                          <Eye className="w-4 h-4 mr-1" /> View Review
                         </Button>
                       )}
                     </div>
@@ -198,28 +181,57 @@ export default function FeedbackWorkspacePage() {
   );
 }
 
-// ─── Review View (shown when buddy is actively reviewing) ─────────────────────
+// ─── Star Rating Component ────────────────────────────────────────────────────
+function StarRatingInput({ value, onChange }) {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange(star)}
+          className="focus:outline-none"
+        >
+          <Star
+            className={`w-7 h-7 transition-colors ${star <= value ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ─── Review View ──────────────────────────────────────────────────────────────
 function ReviewView({ item, currentUserId, onBack }) {
-  const [feedbackRating, setFeedbackRating] = useState(null);
+  const [rating, setRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [feedbackError, setFeedbackError] = useState("");
   const [feedbackSuccess, setFeedbackSuccess] = useState(false);
+  const [project, setProject] = useState(null);
+  const [projectLoading, setProjectLoading] = useState(true);
+
+  useEffect(() => {
+    if (item.projectId) {
+      setProjectLoading(true);
+      apiGet(`/projects/${item.projectId}`)
+        .then((res) => setProject(res.data || res))
+        .catch(() => {})
+        .finally(() => setProjectLoading(false));
+    }
+  }, [item.projectId]);
 
   async function handleSubmitFeedback() {
-    if (!feedbackRating) return;
-    if (feedbackRating === "fail" && !feedbackComment.trim()) {
-      setFeedbackError("Please provide a reason for not passing the portfolio.");
-      return;
-    }
+    if (rating === 0) { setFeedbackError("Please select a rating (1-5 stars)"); return; }
+    if (rating <= 2 && !feedbackComment.trim()) { setFeedbackError("Please provide feedback for low ratings"); return; }
 
     setSubmitting(true);
     setFeedbackError("");
     try {
       await apiPost(`/buddy/workspace/${item.feedbackRequestId}/complete`, {
-        rating: feedbackRating === "pass" ? 5 : 2,
-        comment: feedbackComment.trim() || (feedbackRating === "pass" ? "Portfolio approved" : ""),
-        passed: feedbackRating === "pass",
+        rating,
+        comment: feedbackComment.trim() || (rating >= 4 ? "Great work!" : ""),
+        passed: rating >= 3,
       });
       setFeedbackSuccess(true);
     } catch (err) {
@@ -231,110 +243,161 @@ function ReviewView({ item, currentUserId, onBack }) {
 
   if (feedbackSuccess) {
     return (
-      <div className="container mx-auto px-6 py-8 max-w-4xl">
-        <div className="text-center py-16">
-          <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Feedback Submitted!</h2>
-          <p className="text-gray-600 mb-6">
-            Your review for &quot;{item.projectName}&quot; has been submitted successfully.
-          </p>
-          <Button onClick={onBack} className="bg-indigo-600 hover:bg-indigo-700">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Workspace
-          </Button>
-        </div>
+      <div className="container mx-auto px-6 py-8 max-w-4xl text-center py-16">
+        <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Feedback Submitted!</h2>
+        <p className="text-gray-600 mb-6">Your review for &quot;{item.projectName}&quot; has been submitted.</p>
+        <Button onClick={onBack} className="bg-indigo-600 hover:bg-indigo-700">
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Workspace
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-6 py-8 max-w-4xl">
-      {/* Back button */}
-      <button
-        onClick={onBack}
-        className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium mb-6"
-      >
+    <div className="container mx-auto px-6 py-8 max-w-7xl">
+      <button onClick={onBack} className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium mb-4">
         <ArrowLeft className="w-4 h-4" /> Back to Workspace
       </button>
+      <h1 className="text-2xl font-bold text-gray-900 mb-1">Review: {item.projectName}</h1>
+      <p className="text-gray-600 mb-6">by {item.menteeName}</p>
 
-      {/* Review Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Review: {item.projectName}</h1>
-        <p className="text-gray-600 mt-1">by {item.menteeName}</p>
-      </div>
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Left: Portfolio Preview */}
+        <div className="lg:col-span-1">
+          <Card className="border-2 sticky top-4">
+            <CardContent className="p-4">
+              <h3 className="font-semibold text-gray-900 mb-3">Portfolio Preview</h3>
+              {projectLoading ? (
+                <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin" /></div>
+              ) : project ? (
+                <div className="space-y-3">
+                  {project.media && project.media.length > 0 && (
+                    <img src={project.media[0].url} alt={project.title} className="w-full rounded-lg object-cover aspect-video" />
+                  )}
+                  <p className="text-sm text-gray-700">{project.description || "No description"}</p>
+                  {project.tags && project.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {project.tags.map((tag, i) => <Badge key={i} variant="secondary" className="text-xs">{tag}</Badge>)}
+                    </div>
+                  )}
+                  {project.media && project.media.length > 1 && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {project.media.slice(1, 5).map((m) => (
+                        <img key={m.id} src={m.url} alt="" className="w-full rounded object-cover aspect-square" />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">Could not load portfolio</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Left: Chat with Mentee */}
-        <Card className="border-2">
-          <CardContent className="p-4">
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-indigo-600" />
-              Chat with Mentee
-            </h3>
-            {currentUserId && item.menteeUserId ? (
-              <ChatPanel
-                portfolioContextId={item.projectId}
-                currentUserId={currentUserId}
-                receiverId={item.menteeUserId}
-              />
-            ) : (
-              <p className="text-gray-500 text-sm py-8 text-center">
-                Chat unavailable — missing user context.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        {/* Middle: Chat */}
+        <div className="lg:col-span-1">
+          <Card className="border-2">
+            <CardContent className="p-4">
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-indigo-600" /> Chat with Mentee
+              </h3>
+              {currentUserId && item.menteeUserId ? (
+                <ChatPanel portfolioContextId={item.projectId} currentUserId={currentUserId} receiverId={item.menteeUserId} />
+              ) : (
+                <p className="text-gray-500 text-sm py-8 text-center">Chat unavailable</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Right: Feedback Form */}
-        <Card className="border-2">
-          <CardContent className="p-4">
-            <h3 className="font-semibold text-gray-900 mb-4">Submit Your Feedback</h3>
+        <div className="lg:col-span-1">
+          <Card className="border-2 sticky top-4">
+            <CardContent className="p-4">
+              <h3 className="font-semibold text-gray-900 mb-4">Submit Your Feedback</h3>
 
-            {/* Pass / Fail */}
-            <div className="flex gap-3 mb-4">
-              <Button
-                variant={feedbackRating === "pass" ? "default" : "outline"}
-                className={feedbackRating === "pass" ? "bg-green-600 hover:bg-green-700 flex-1" : "border-green-600 text-green-600 hover:bg-green-50 flex-1"}
-                onClick={() => { setFeedbackRating("pass"); setFeedbackError(""); }}
-              >
-                <CheckCircle2 className="w-4 h-4 mr-2" /> Pass
-              </Button>
-              <Button
-                variant={feedbackRating === "fail" ? "default" : "outline"}
-                className={feedbackRating === "fail" ? "bg-red-600 hover:bg-red-700 flex-1" : "border-red-600 text-red-600 hover:bg-red-50 flex-1"}
-                onClick={() => { setFeedbackRating("fail"); setFeedbackError(""); }}
-              >
-                <XCircle className="w-4 h-4 mr-2" /> Needs Improvement
-              </Button>
-            </div>
+              {/* Star Rating */}
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">Rating</p>
+                <StarRatingInput value={rating} onChange={setRating} />
+                {rating > 0 && <p className="text-xs text-gray-500 mt-1">{rating}/5 stars</p>}
+              </div>
 
-            {/* Comment */}
-            {feedbackRating && (
+              {/* Comment */}
               <div className="mb-4">
                 <Textarea
-                  placeholder={feedbackRating === "fail" ? "Explain what needs improvement (required)..." : "Add optional comments..."}
+                  placeholder={rating <= 2 ? "What needs improvement? (required for 1-2 stars)" : "Add comments (optional)..."}
                   value={feedbackComment}
                   onChange={(e) => setFeedbackComment(e.target.value)}
-                  className="min-h-[120px]"
+                  className="min-h-[100px]"
                 />
-                {feedbackRating === "fail" && (
-                  <p className="text-xs text-gray-500 mt-1">* Required when portfolio does not pass</p>
-                )}
               </div>
-            )}
 
-            {feedbackError && <p className="text-sm text-red-600 mb-3">{feedbackError}</p>}
+              {feedbackError && <p className="text-sm text-red-600 mb-3">{feedbackError}</p>}
 
-            <Button
-              onClick={handleSubmitFeedback}
-              disabled={!feedbackRating || submitting}
-              className="w-full bg-indigo-600 hover:bg-indigo-700"
-            >
-              {submitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Submit Feedback
-            </Button>
-          </CardContent>
-        </Card>
+              <Button onClick={handleSubmitFeedback} disabled={rating === 0 || submitting} className="w-full bg-indigo-600 hover:bg-indigo-700">
+                {submitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Submit Feedback
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Completed Review View (view past chat + feedback) ────────────────────────
+function CompletedReviewView({ item, currentUserId, onBack }) {
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (item.projectId) {
+      apiGet(`/messages/${item.projectId}`)
+        .then((res) => setMessages(res.data || []))
+        .catch(() => {})
+        .finally(() => setLoading(false));
+    }
+  }, [item.projectId]);
+
+  return (
+    <div className="container mx-auto px-6 py-8 max-w-4xl">
+      <button onClick={onBack} className="flex items-center gap-1 text-indigo-600 hover:text-indigo-700 font-medium mb-4">
+        <ArrowLeft className="w-4 h-4" /> Back to Workspace
+      </button>
+      <h1 className="text-2xl font-bold text-gray-900 mb-1">Review: {item.projectName}</h1>
+      <p className="text-gray-600 mb-2">by {item.menteeName}</p>
+      <Badge className="bg-green-100 text-green-700 mb-6">Completed</Badge>
+
+      <Card className="border-2">
+        <CardContent className="p-4">
+          <h3 className="font-semibold text-gray-900 mb-3">Conversation History</h3>
+          {loading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin" /></div>
+          ) : messages.length === 0 ? (
+            <p className="text-gray-500 text-sm text-center py-8">No messages in this review</p>
+          ) : (
+            <div className="max-h-96 overflow-y-auto space-y-3 p-2">
+              {messages.map((msg) => {
+                const isMine = msg.senderId === currentUserId;
+                return (
+                  <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[75%] px-3 py-2 rounded-lg text-sm ${isMine ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-800"}`}>
+                      <p className="break-words">{msg.content}</p>
+                      <p className={`text-xs mt-1 ${isMine ? "text-indigo-200" : "text-gray-400"}`}>
+                        {new Date(msg.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

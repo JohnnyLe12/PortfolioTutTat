@@ -6,6 +6,7 @@ import {
   MessageSquare,
   ThumbsUp,
   ArrowRight,
+  Pencil,
 } from "lucide-react";
 
 import {
@@ -16,7 +17,11 @@ import {
   CardDescription,
 } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { apiGet } from "../lib/api";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Textarea } from "../components/ui/textarea";
+import { apiGet, apiPut } from "../lib/api";
 
 export default function BuddyDashboardPage() {
   const [stats, setStats] = useState({
@@ -29,6 +34,9 @@ export default function BuddyDashboardPage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editData, setEditData] = useState({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -121,43 +129,79 @@ export default function BuddyDashboardPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Header with Profile Info */}
       <div className="mb-8">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold overflow-hidden">
-            {profile?.avatarUrl ? (
-              <img
-                src={profile.avatarUrl}
-                alt="Profile avatar"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              profile?.fullName
-                ? profile.fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
-                : "BD"
-            )}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold overflow-hidden">
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="Profile avatar" className="w-full h-full object-cover" />
+              ) : (
+                profile?.fullName ? profile.fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "BD"
+              )}
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold">{profile?.fullName || "Buddy Dashboard"}</h1>
+              {profile?.roleTitle && <p className="text-gray-600">{profile.roleTitle}</p>}
+              {!profile?.roleTitle && <p className="text-gray-600">Track your review activity and stay on top of feedback requests</p>}
+            </div>
           </div>
-          <div>
-            <h1 className="text-4xl font-bold">{profile?.fullName || "Buddy Dashboard"}</h1>
-            {profile?.roleTitle && (
-              <p className="text-gray-600">{profile.roleTitle}</p>
-            )}
-            {!profile?.roleTitle && (
-              <p className="text-gray-600">
-                Track your review activity and stay on top of feedback requests
-              </p>
-            )}
-          </div>
+          <Button variant="outline" size="sm" onClick={() => { setEditData({ fullName: profile?.fullName || "", roleTitle: profile?.roleTitle || "", bio: profile?.bio || "", skills: (profile?.skills || []).join(", ") }); setShowEditForm(true); }}>
+            <Pencil className="w-4 h-4 mr-1" /> Edit Profile
+          </Button>
         </div>
-        {profile?.bio && (
-          <p className="text-gray-600 text-sm mb-2">{profile.bio}</p>
-        )}
+        {profile?.bio && <p className="text-gray-600 text-sm mb-2">{profile.bio}</p>}
         {profile?.skills && profile.skills.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {profile.skills.map((skill, i) => (
-              <Badge key={i} variant="secondary">{skill}</Badge>
-            ))}
+            {profile.skills.map((skill, i) => <Badge key={i} variant="secondary">{skill}</Badge>)}
           </div>
         )}
       </div>
+
+      {/* Edit Profile Form */}
+      {showEditForm && (
+        <Card className="mb-8 border-2 border-indigo-200">
+          <CardContent className="p-6 space-y-4">
+            <h3 className="font-bold text-lg">Edit Profile</h3>
+            <div>
+              <Label>Full Name</Label>
+              <Input value={editData.fullName} onChange={(e) => setEditData({...editData, fullName: e.target.value})} className="mt-1" />
+            </div>
+            <div>
+              <Label>Role Title</Label>
+              <Input value={editData.roleTitle} onChange={(e) => setEditData({...editData, roleTitle: e.target.value})} placeholder="e.g. Senior UI/UX Designer" className="mt-1" />
+            </div>
+            <div>
+              <Label>Bio</Label>
+              <Textarea value={editData.bio} onChange={(e) => setEditData({...editData, bio: e.target.value})} placeholder="Tell us about yourself..." className="mt-1" />
+            </div>
+            <div>
+              <Label>Skills (comma separated)</Label>
+              <Input value={editData.skills} onChange={(e) => setEditData({...editData, skills: e.target.value})} placeholder="UI/UX, Figma, Illustration" className="mt-1" />
+            </div>
+            <div className="flex gap-3">
+              <Button className="bg-indigo-600 hover:bg-indigo-700" disabled={saving} onClick={async () => {
+                setSaving(true);
+                try {
+                  await apiPut("/buddy/profile/me", {
+                    fullName: editData.fullName.trim(),
+                    roleTitle: editData.roleTitle.trim(),
+                    bio: editData.bio.trim(),
+                    skills: editData.skills.split(",").map(s => s.trim()).filter(Boolean),
+                  });
+                  await fetchProfile();
+                  setShowEditForm(false);
+                } catch (err) {
+                  setError(err.message || "Failed to save profile");
+                } finally {
+                  setSaving(false);
+                }
+              }}>
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+              <Button variant="outline" onClick={() => setShowEditForm(false)}>Cancel</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Error State */}
       {error && (
@@ -210,7 +254,7 @@ export default function BuddyDashboardPage() {
               <p className="text-sm text-gray-600">Helpful Rating</p>
               <ThumbsUp className="h-4 w-4 text-purple-500" />
             </div>
-            <h2 className="text-3xl font-bold">{stats.helpfulRating.toFixed(1)}</h2>
+            <h2 className="text-3xl font-bold">{Math.round(stats.helpfulRating)}</h2>
           </CardContent>
         </Card>
       </div>
