@@ -15,6 +15,10 @@ dist
 dist-ssr
 coverage
 
+# Next.js
+.next
+out
+
 # Environment files
 .env
 .env.*
@@ -23,6 +27,9 @@ coverage
 # Vite
 .vite
 
+# Uploaded files (user content generated at runtime)
+public/uploads/
+
 # OS files
 .DS_Store
 Thumbs.db
@@ -30,7 +37,6 @@ Thumbs.db
 # IDE / Editors
 .vscode/*
 !.vscode/extensions.json
-
 .idea
 
 *.suo
