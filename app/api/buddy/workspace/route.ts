@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
             id: true,
             title: true,
             mentee: {
-              select: { fullName: true },
+              select: { fullName: true, userId: true },
             },
           },
         },
@@ -122,6 +122,7 @@ export async function GET(req: NextRequest) {
           projectId: bookmark.project.id,
           projectName: bookmark.project.title,
           menteeName: bookmark.project.mentee.fullName,
+          menteeUserId: bookmark.project.mentee.userId,
           reviewStatus,
           feedbackRequestId: feedbackRequest?.id || null,
           feedbackRequestStatus: feedbackRequest?.status || null,
