@@ -142,7 +142,11 @@ export default function MentorFeedbackPage() {
                   {feedbackRequest.project?.title || "Untitled Project"}
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Reviewer: {buddyName}
+                  Reviewer: {buddyUserId ? (
+                    <Link to={`/buddy-profile/${buddyUserId}`} className="text-indigo-600 hover:underline font-medium">
+                      {buddyName}
+                    </Link>
+                  ) : buddyName}
                 </p>
               </div>
               <FeedbackStatusTag status={feedbackRequest.status} />

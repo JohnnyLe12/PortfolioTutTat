@@ -30,6 +30,7 @@ import FeedbackWorkspacePage from "../pages/FeedbackWorkspacePage";
 import JobCreationPage from "../pages/JobCreationPage";
 import ApplicantsTrackerPage from "../pages/ApplicantsTrackerPage";
 import AdvancedJobSearchPage from "../pages/AdvancedJobSearchPage";
+import BuddyProfilePage from "../pages/BuddyProfilePage";
 import NotFoundPage from "../pages/NotFoundPage";
 
 export default function AppRoutes() {
@@ -66,6 +67,9 @@ export default function AppRoutes() {
 
           {/* Applications (mentee) */}
           <Route path="applications" element={<ApplicationHistoryPage />} />
+
+          {/* Buddy Profile (viewable by any authenticated user) */}
+          <Route path="buddy-profile/:userId" element={<BuddyProfilePage />} />
         </Route>
 
         {/* Buddy-only routes (buddy + admin) */}

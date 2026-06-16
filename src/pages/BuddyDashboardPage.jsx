@@ -129,31 +129,80 @@ export default function BuddyDashboardPage() {
     <div className="container mx-auto px-4 py-8">
       {/* Header with Profile Info */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold overflow-hidden">
-              {profile?.avatarUrl ? (
-                <img src={profile.avatarUrl} alt="Profile avatar" className="w-full h-full object-cover" />
-              ) : (
-                profile?.fullName ? profile.fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "BD"
+        <Card className="border-2">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-2xl font-bold overflow-hidden">
+                  {profile?.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    profile?.fullName ? profile.fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "BD"
+                  )}
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold">{profile?.fullName || "Buddy"}</h1>
+                  {profile?.roleTitle && <p className="text-gray-600 text-lg">{profile.roleTitle}</p>}
+                  {profile?.major && <Badge variant="secondary" className="mt-1">{profile.major.replace("_", " ")}</Badge>}
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => {
+                setEditData({
+                  fullName: profile?.fullName || "",
+                  roleTitle: profile?.roleTitle || "",
+                  bio: profile?.bio || "",
+                  skills: (profile?.skills || []).join(", "),
+                  designTools: (profile?.designTools || []).join(", "),
+                  interests: (profile?.interests || []).join(", "),
+                  major: profile?.major || "",
+                  socialLinks: profile?.socialLinks || {},
+                });
+                setShowEditForm(true);
+              }}>
+                <Pencil className="w-4 h-4 mr-1" /> Edit Profile
+              </Button>
+            </div>
+
+            {profile?.bio && <p className="text-gray-700 mb-4">{profile.bio}</p>}
+
+            <div className="grid md:grid-cols-2 gap-4">
+              {profile?.skills && profile.skills.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-2">Skills</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.skills.map((s, i) => <Badge key={i} variant="secondary">{s}</Badge>)}
+                  </div>
+                </div>
+              )}
+              {profile?.designTools && profile.designTools.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-2">Design Tools</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.designTools.map((t, i) => <Badge key={i} className="bg-blue-50 text-blue-700">{t}</Badge>)}
+                  </div>
+                </div>
+              )}
+              {profile?.interests && profile.interests.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-2">Interests</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.interests.map((int, i) => <Badge key={i} className="bg-purple-50 text-purple-700">{int}</Badge>)}
+                  </div>
+                </div>
+              )}
+              {profile?.socialLinks && Object.keys(profile.socialLinks).some(k => profile.socialLinks[k]) && (
+                <div>
+                  <p className="text-sm font-medium text-gray-500 mb-2">Social Links</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(profile.socialLinks).filter(([, v]) => v).map(([k, v]) => (
+                      <a key={k} href={v} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline">{k}</a>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
-            <div>
-              <h1 className="text-4xl font-bold">{profile?.fullName || "Buddy Dashboard"}</h1>
-              {profile?.roleTitle && <p className="text-gray-600">{profile.roleTitle}</p>}
-              {!profile?.roleTitle && <p className="text-gray-600">Track your review activity and stay on top of feedback requests</p>}
-            </div>
-          </div>
-          <Button variant="outline" size="sm" onClick={() => { setEditData({ fullName: profile?.fullName || "", roleTitle: profile?.roleTitle || "", bio: profile?.bio || "", skills: (profile?.skills || []).join(", ") }); setShowEditForm(true); }}>
-            <Pencil className="w-4 h-4 mr-1" /> Edit Profile
-          </Button>
-        </div>
-        {profile?.bio && <p className="text-gray-600 text-sm mb-2">{profile.bio}</p>}
-        {profile?.skills && profile.skills.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {profile.skills.map((skill, i) => <Badge key={i} variant="secondary">{skill}</Badge>)}
-          </div>
-        )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Edit Profile Form */}
@@ -161,23 +210,35 @@ export default function BuddyDashboardPage() {
         <Card className="mb-8 border-2 border-indigo-200">
           <CardContent className="p-6 space-y-4">
             <h3 className="font-bold text-lg">Edit Profile</h3>
-            <div>
-              <Label>Full Name</Label>
-              <Input value={editData.fullName} onChange={(e) => setEditData({...editData, fullName: e.target.value})} className="mt-1" />
-            </div>
-            <div>
-              <Label>Role Title</Label>
-              <Input value={editData.roleTitle} onChange={(e) => setEditData({...editData, roleTitle: e.target.value})} placeholder="e.g. Senior UI/UX Designer" className="mt-1" />
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label>Full Name *</Label>
+                <Input value={editData.fullName} onChange={(e) => setEditData({...editData, fullName: e.target.value})} className="mt-1" />
+              </div>
+              <div>
+                <Label>Role Title</Label>
+                <Input value={editData.roleTitle} onChange={(e) => setEditData({...editData, roleTitle: e.target.value})} placeholder="Senior UI/UX Designer" className="mt-1" />
+              </div>
             </div>
             <div>
               <Label>Bio</Label>
-              <Textarea value={editData.bio} onChange={(e) => setEditData({...editData, bio: e.target.value})} placeholder="Tell us about yourself..." className="mt-1" />
+              <Textarea value={editData.bio} onChange={(e) => setEditData({...editData, bio: e.target.value})} placeholder="Tell mentees about your background and experience..." className="mt-1 min-h-[100px]" />
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label>Skills (comma separated)</Label>
+                <Input value={editData.skills} onChange={(e) => setEditData({...editData, skills: e.target.value})} placeholder="UI/UX, Figma, Illustration" className="mt-1" />
+              </div>
+              <div>
+                <Label>Design Tools (comma separated)</Label>
+                <Input value={editData.designTools} onChange={(e) => setEditData({...editData, designTools: e.target.value})} placeholder="Figma, Adobe XD, Sketch" className="mt-1" />
+              </div>
             </div>
             <div>
-              <Label>Skills (comma separated)</Label>
-              <Input value={editData.skills} onChange={(e) => setEditData({...editData, skills: e.target.value})} placeholder="UI/UX, Figma, Illustration" className="mt-1" />
+              <Label>Interests (comma separated)</Label>
+              <Input value={editData.interests} onChange={(e) => setEditData({...editData, interests: e.target.value})} placeholder="Graphic Design, UI/UX, Motion Design" className="mt-1" />
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 pt-2">
               <Button className="bg-indigo-600 hover:bg-indigo-700" disabled={saving} onClick={async () => {
                 setSaving(true);
                 try {
@@ -186,6 +247,8 @@ export default function BuddyDashboardPage() {
                     roleTitle: editData.roleTitle.trim(),
                     bio: editData.bio.trim(),
                     skills: editData.skills.split(",").map(s => s.trim()).filter(Boolean),
+                    designTools: editData.designTools.split(",").map(s => s.trim()).filter(Boolean),
+                    interests: editData.interests.split(",").map(s => s.trim()).filter(Boolean),
                   });
                   await fetchProfile();
                   setShowEditForm(false);
@@ -202,7 +265,6 @@ export default function BuddyDashboardPage() {
           </CardContent>
         </Card>
       )}
-
       {/* Error State */}
       {error && (
         <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-center justify-between">
