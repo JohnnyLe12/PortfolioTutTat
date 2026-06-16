@@ -67,22 +67,18 @@ export async function POST(req: NextRequest) {
       return errorResponse('Profile not found', 404, 'NOT_FOUND')
     }
 
-    // Upload to Vercel Blob (or local fallback in development)
+    // Upload to Vercel Blob
     let avatarUrl: string
     try {
-      console.log('[POST /api/profiles/me/avatar] Attempting Vercel Blob upload...')
-      console.log('[POST /api/profiles/me/avatar] BLOB_READ_WRITE_TOKEN exists:', !!process.env.BLOB_READ_WRITE_TOKEN)
-      console.log('[POST /api/profiles/me/avatar] Token prefix:', process.env.BLOB_READ_WRITE_TOKEN?.substring(0, 20))
       const blob = await put(`avatars/${userId}/${file.name}`, file, {
         access: 'public',
         contentType: file.type,
+        addRandomSuffix: true,
       })
       avatarUrl = blob.url
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err)
-      console.error('[POST /api/profiles/me/avatar] Blob upload failed:', errorMessage)
-      console.error('[POST /api/profiles/me/avatar] Full error:', JSON.stringify(err, Object.getOwnPropertyNames(err as object)))
-      
+      console.error('[POST /api/profiles/me/avatar] Blob upload failed:', err)
+
       // Fallback: save locally in development
       if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === undefined) {
         try {
@@ -105,7 +101,7 @@ export async function POST(req: NextRequest) {
         }
       } else {
         return errorResponse(
-          `Media service error: ${errorMessage}`,
+          'Media service is temporarily unavailable. Please try again later.',
           503,
           'MEDIA_SERVICE_UNAVAILABLE'
         )
