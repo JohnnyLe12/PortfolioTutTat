@@ -66,6 +66,12 @@ export default function SignUpPage() {
       return;
     }
 
+    // Client-side validation
+    if (password.length < 8) {
+      setErrors({ password: "Mật khẩu phải có ít nhất 8 ký tự" });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -93,7 +99,14 @@ export default function SignUpPage() {
         } else if (err.status === 403) {
           setErrors({ general: err.message || "Invalid admin invite code" });
         } else if (err.status === 400) {
-          setErrors({ general: err.message || "Validation failed" });
+          const msg = err.message || "Validation failed";
+          if (msg.toLowerCase().includes("password") || msg.toLowerCase().includes("short") || msg.toLowerCase().includes("8")) {
+            setErrors({ password: "Mật khẩu phải có ít nhất 8 ký tự" });
+          } else if (msg.toLowerCase().includes("email")) {
+            setErrors({ email: msg });
+          } else {
+            setErrors({ general: msg });
+          }
         } else {
           setErrors({ general: err.message || "Something went wrong" });
         }
