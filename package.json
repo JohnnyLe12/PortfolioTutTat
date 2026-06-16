@@ -12,6 +12,7 @@
     "next:build": "next build",
     "next:start": "next start",
     "postinstall": "prisma generate",
+    "vercel-build": "prisma generate && vite build --outDir public --emptyOutDir=false && next build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"

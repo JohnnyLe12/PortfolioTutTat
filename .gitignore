@@ -30,6 +30,10 @@ out
 # Uploaded files (user content generated at runtime)
 public/uploads/
 
+# Vite build output in public/ (generated during Vercel deploy)
+public/index.html
+public/assets/
+
 # OS files
 .DS_Store
 Thumbs.db
