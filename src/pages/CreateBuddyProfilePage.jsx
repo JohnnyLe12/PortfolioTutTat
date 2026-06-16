@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
-import { Check, Plus, X } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Check, Plus, X, Upload } from "lucide-react";
 import { apiPost, apiPut, apiGet } from "../lib/api";
 
 const MAJORS = [
@@ -68,6 +68,9 @@ export default function CreateBuddyProfilePage() {
   const [roleTitle, setRoleTitle] = useState("");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const avatarInputRef = useRef(null);
   const [major, setMajor] = useState("");
   const [skills, setSkills] = useState([]);
   const [skillInput, setSkillInput] = useState("");
@@ -117,14 +120,14 @@ export default function CreateBuddyProfilePage() {
         fullName,
         roleTitle,
         bio,
-        avatarUrl,
+        avatarUrl: avatarFile ? "file-selected" : avatarUrl,
         major,
         skills,
         designTools: selectedTools,
         interests: selectedInterests,
         socialLinks,
       }),
-    [fullName, roleTitle, bio, avatarUrl, major, skills, selectedTools, selectedInterests, socialLinks]
+    [fullName, roleTitle, bio, avatarUrl, avatarFile, major, skills, selectedTools, selectedInterests, socialLinks]
   );
 
   // Handlers
@@ -206,7 +209,7 @@ export default function CreateBuddyProfilePage() {
       newErrors.bio = "Bio must be at most 2000 characters";
     }
 
-    if (avatarUrl.length > 500) {
+    if (avatarUrl.length > 500 && !avatarFile) {
       newErrors.avatarUrl = "Avatar URL must be at most 500 characters";
     }
 
@@ -266,7 +269,7 @@ export default function CreateBuddyProfilePage() {
         fullName: fullName.trim(),
         roleTitle: roleTitle.trim(),
         bio: bio.trim() || undefined,
-        avatarUrl: avatarUrl.trim() || undefined,
+        avatarUrl: (avatarFile ? undefined : avatarUrl.trim()) || undefined,
         major: major || undefined,
         skills,
         designTools: selectedTools,
@@ -275,6 +278,24 @@ export default function CreateBuddyProfilePage() {
       };
 
       await apiPut("/buddy/profile/me", payload);
+
+      // Upload avatar file if selected
+      if (avatarFile) {
+        try {
+          const formData = new FormData();
+          formData.append("file", avatarFile);
+          const token = localStorage.getItem("token");
+          await fetch("/api/buddy/profile/me/avatar", {
+            method: "POST",
+            headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+            body: formData,
+          });
+        } catch (err) {
+          console.error("Avatar upload failed:", err);
+          // Don't block profile creation if avatar upload fails
+        }
+      }
+
       navigate("/buddy-dashboard");
     } catch (err) {
       setApiError(err.message || "Failed to create profile. Please try again.");
@@ -411,24 +432,58 @@ export default function CreateBuddyProfilePage() {
               )}
             </div>
 
-            {/* AVATAR URL */}
+            {/* AVATAR UPLOAD */}
             <div>
               <label className="block mb-2 font-medium text-gray-700">
-                Avatar URL
+                Avatar
               </label>
-              <input
-                type="text"
-                placeholder="https://example.com/avatar.jpg"
-                value={avatarUrl}
-                onChange={(e) => {
-                  setAvatarUrl(e.target.value);
-                  if (errors.avatarUrl) setErrors((prev) => ({ ...prev, avatarUrl: "" }));
-                }}
-                maxLength={500}
-                className={`w-full h-11 border rounded-xl px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                  errors.avatarUrl ? "border-red-500 focus:ring-red-500" : "border-gray-300"
-                }`}
-              />
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-xl font-bold overflow-hidden border-2 border-gray-200">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Avatar preview" className="w-full h-full object-cover" />
+                  ) : avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    fullName ? fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "BD"
+                  )}
+                </div>
+                <div>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          setErrors((prev) => ({ ...prev, avatarUrl: "File too large (max 5MB)" }));
+                          return;
+                        }
+                        const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+                        if (!allowedTypes.includes(file.type)) {
+                          setErrors((prev) => ({ ...prev, avatarUrl: "Only PNG, JPG, and WebP files are allowed" }));
+                          return;
+                        }
+                        setAvatarFile(file);
+                        setAvatarPreview(URL.createObjectURL(file));
+                        setAvatarUrl("pending-upload");
+                        if (errors.avatarUrl) setErrors((prev) => ({ ...prev, avatarUrl: "" }));
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all"
+                  >
+                    <Upload className="w-4 h-4" />
+                    {avatarFile ? "Change Photo" : "Upload Photo"}
+                  </button>
+                  {avatarFile && <p className="text-xs text-gray-500 mt-1">{avatarFile.name}</p>}
+                  <p className="text-xs text-gray-400 mt-1">PNG, JPG, or WebP. Max 5MB.</p>
+                </div>
+              </div>
               {errors.avatarUrl && (
                 <p className="mt-1 text-sm text-red-600">{errors.avatarUrl}</p>
               )}

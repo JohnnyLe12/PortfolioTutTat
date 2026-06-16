@@ -349,19 +349,25 @@ function ReviewView({ item, currentUserId, onBack }) {
   );
 }
 
-// ─── Completed Review View (view past chat + feedback) ────────────────────────
+// ─── Completed Review View (portfolio + feedback details) ─────────────────────
 function CompletedReviewView({ item, currentUserId, onBack }) {
-  const [messages, setMessages] = useState([]);
+  const [project, setProject] = useState(null);
+  const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (item.projectId) {
-      apiGet(`/messages/${item.projectId}`)
-        .then((res) => setMessages(res.data || []))
-        .catch(() => {})
-        .finally(() => setLoading(false));
-    }
-  }, [item.projectId]);
+    Promise.all([
+      item.projectId
+        ? apiGet(`/projects/${item.projectId}`).then((r) => r.data || r).catch(() => null)
+        : Promise.resolve(null),
+      item.feedbackRequestId
+        ? apiGet(`/feedback-requests/${item.feedbackRequestId}/feedbacks`).then((r) => r.data || []).catch(() => [])
+        : Promise.resolve([]),
+    ]).then(([proj, fbs]) => {
+      setProject(proj);
+      setFeedbacks(fbs);
+    }).finally(() => setLoading(false));
+  }, [item.projectId, item.feedbackRequestId]);
 
   return (
     <div className="container mx-auto px-6 py-8 max-w-4xl">
@@ -372,32 +378,107 @@ function CompletedReviewView({ item, currentUserId, onBack }) {
       <p className="text-gray-600 mb-2">by {item.menteeName}</p>
       <Badge className="bg-green-100 text-green-700 mb-6">Completed</Badge>
 
-      <Card className="border-2">
-        <CardContent className="p-4">
-          <h3 className="font-semibold text-gray-900 mb-3">Conversation History</h3>
-          {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin" /></div>
-          ) : messages.length === 0 ? (
-            <p className="text-gray-500 text-sm text-center py-8">No messages in this review</p>
-          ) : (
-            <div className="max-h-96 overflow-y-auto space-y-3 p-2">
-              {messages.map((msg) => {
-                const isMine = msg.senderId === currentUserId;
-                return (
-                  <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[75%] px-3 py-2 rounded-lg text-sm ${isMine ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-800"}`}>
-                      <p className="break-words">{msg.content}</p>
-                      <p className={`text-xs mt-1 ${isMine ? "text-indigo-200" : "text-gray-400"}`}>
-                        {new Date(msg.createdAt).toLocaleString()}
-                      </p>
-                    </div>
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-indigo-600" /></div>
+      ) : (
+        <div className="space-y-6">
+          {/* Portfolio Preview */}
+          <Card className="border-2">
+            <CardContent className="p-5">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Eye className="w-5 h-5 text-indigo-600" /> Portfolio
+              </h3>
+              {project ? (
+                <div className="space-y-4">
+                  {project.media && project.media.length > 0 && (
+                    <img src={project.media[0].url} alt={project.title || item.projectName} className="w-full max-h-72 rounded-lg object-cover" />
+                  )}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900">{project.title || item.projectName}</h4>
+                    {project.description && <p className="text-gray-700 mt-1">{project.description}</p>}
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  {project.tags && project.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {project.tags.map((tag, i) => <Badge key={i} variant="secondary" className="text-xs">{tag}</Badge>)}
+                    </div>
+                  )}
+                  {project.media && project.media.length > 1 && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {project.media.slice(1, 5).map((m) => (
+                        <img key={m.id} src={m.url} alt="" className="w-full rounded object-cover aspect-square" />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">Could not load portfolio details</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Feedback Details */}
+          <Card className="border-2">
+            <CardContent className="p-5">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Star className="w-5 h-5 text-yellow-500" /> Feedback Given
+              </h3>
+              {feedbacks.length === 0 ? (
+                <p className="text-gray-500 text-sm">No feedback records found</p>
+              ) : (
+                <div className="space-y-4">
+                  {feedbacks.map((fb) => (
+                    <div key={fb.id} className="border rounded-lg p-4 space-y-3">
+                      {/* Star Rating */}
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star key={s} className={`w-5 h-5 ${s <= (fb.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`} />
+                          ))}
+                        </div>
+                        <span className="text-sm text-gray-600">{fb.rating}/5</span>
+                        {fb.passed !== undefined && (
+                          <Badge className={fb.passed ? "bg-green-100 text-green-700 ml-2" : "bg-red-100 text-red-700 ml-2"}>
+                            {fb.passed ? <><CheckCircle2 className="w-3 h-3 mr-1" /> Passed</> : <><XCircle className="w-3 h-3 mr-1" /> Needs Work</>}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Comment */}
+                      {fb.comment && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-500 mb-1">Comment</p>
+                          <p className="text-gray-800">{fb.comment}</p>
+                        </div>
+                      )}
+
+                      {/* Suggestions */}
+                      {fb.suggestions && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-500 mb-1">Suggestions</p>
+                          <p className="text-gray-800">{fb.suggestions}</p>
+                        </div>
+                      )}
+
+                      {/* Helpful Count */}
+                      {fb.helpfulCount > 0 && (
+                        <div className="flex items-center gap-1 text-sm text-purple-600">
+                          <MessageSquare className="w-4 h-4" />
+                          <span>{fb.helpfulCount} {fb.helpfulCount === 1 ? "person" : "people"} found this helpful</span>
+                        </div>
+                      )}
+
+                      {/* Date */}
+                      {fb.createdAt && (
+                        <p className="text-xs text-gray-400">Submitted on {new Date(fb.createdAt).toLocaleDateString()}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

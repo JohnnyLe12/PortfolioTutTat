@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   CheckCircle2,
@@ -7,6 +7,7 @@ import {
   ThumbsUp,
   ArrowRight,
   Pencil,
+  Upload,
 } from "lucide-react";
 
 import {
@@ -37,6 +38,9 @@ export default function BuddyDashboardPage() {
   const [showEditForm, setShowEditForm] = useState(false);
   const [editData, setEditData] = useState({});
   const [saving, setSaving] = useState(false);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const avatarInputRef = useRef(null);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -210,6 +214,46 @@ export default function BuddyDashboardPage() {
         <Card className="mb-8 border-2 border-indigo-200">
           <CardContent className="p-6 space-y-4">
             <h3 className="font-bold text-lg">Edit Profile</h3>
+
+            {/* Avatar Upload */}
+            <div>
+              <Label>Avatar</Label>
+              <div className="mt-2 flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-lg font-bold overflow-hidden border-2 border-gray-200">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Avatar preview" className="w-full h-full object-cover" />
+                  ) : profile?.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    profile?.fullName ? profile.fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() : "BD"
+                  )}
+                </div>
+                <div>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          setError("File too large (max 5MB)");
+                          return;
+                        }
+                        setAvatarFile(file);
+                        setAvatarPreview(URL.createObjectURL(file));
+                      }
+                    }}
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={() => avatarInputRef.current?.click()}>
+                    <Upload className="w-4 h-4 mr-1" /> {avatarFile ? "Change Photo" : "Upload Photo"}
+                  </Button>
+                  {avatarFile && <p className="text-xs text-gray-500 mt-1">{avatarFile.name}</p>}
+                </div>
+              </div>
+            </div>
+
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <Label>Full Name *</Label>
@@ -238,10 +282,44 @@ export default function BuddyDashboardPage() {
               <Label>Interests (comma separated)</Label>
               <Input value={editData.interests} onChange={(e) => setEditData({...editData, interests: e.target.value})} placeholder="Graphic Design, UI/UX, Motion Design" className="mt-1" />
             </div>
+
+            {/* Social Links */}
+            <div>
+              <Label className="text-base font-semibold">Social Links</Label>
+              <p className="text-sm text-gray-500 mb-3">Add your social media profiles (must start with https://)</p>
+              <div className="grid md:grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-sm text-gray-600">LinkedIn</Label>
+                  <Input value={editData.socialLinks?.linkedin || ""} onChange={(e) => setEditData({...editData, socialLinks: {...(editData.socialLinks || {}), linkedin: e.target.value}})} placeholder="https://linkedin.com/in/..." className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-600">Instagram</Label>
+                  <Input value={editData.socialLinks?.instagram || ""} onChange={(e) => setEditData({...editData, socialLinks: {...(editData.socialLinks || {}), instagram: e.target.value}})} placeholder="https://instagram.com/..." className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-600">GitHub</Label>
+                  <Input value={editData.socialLinks?.github || ""} onChange={(e) => setEditData({...editData, socialLinks: {...(editData.socialLinks || {}), github: e.target.value}})} placeholder="https://github.com/..." className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-sm text-gray-600">Behance</Label>
+                  <Input value={editData.socialLinks?.behance || ""} onChange={(e) => setEditData({...editData, socialLinks: {...(editData.socialLinks || {}), behance: e.target.value}})} placeholder="https://behance.net/..." className="mt-1" />
+                </div>
+              </div>
+            </div>
+
             <div className="flex gap-3 pt-2">
               <Button className="bg-indigo-600 hover:bg-indigo-700" disabled={saving} onClick={async () => {
                 setSaving(true);
                 try {
+                  // Build clean social links
+                  const cleanSocialLinks = {};
+                  if (editData.socialLinks) {
+                    for (const [key, value] of Object.entries(editData.socialLinks)) {
+                      const trimmed = (value || "").trim();
+                      if (trimmed) cleanSocialLinks[key] = trimmed;
+                    }
+                  }
+
                   await apiPut("/buddy/profile/me", {
                     fullName: editData.fullName.trim(),
                     roleTitle: editData.roleTitle.trim(),
@@ -249,9 +327,25 @@ export default function BuddyDashboardPage() {
                     skills: editData.skills.split(",").map(s => s.trim()).filter(Boolean),
                     designTools: editData.designTools.split(",").map(s => s.trim()).filter(Boolean),
                     interests: editData.interests.split(",").map(s => s.trim()).filter(Boolean),
+                    socialLinks: cleanSocialLinks,
                   });
+
+                  // Upload avatar if a file was selected
+                  if (avatarFile) {
+                    const formData = new FormData();
+                    formData.append("file", avatarFile);
+                    const token = localStorage.getItem("token");
+                    await fetch("/api/buddy/profile/me/avatar", {
+                      method: "POST",
+                      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                      body: formData,
+                    });
+                  }
+
                   await fetchProfile();
                   setShowEditForm(false);
+                  setAvatarFile(null);
+                  setAvatarPreview(null);
                 } catch (err) {
                   setError(err.message || "Failed to save profile");
                 } finally {
@@ -260,7 +354,7 @@ export default function BuddyDashboardPage() {
               }}>
                 {saving ? "Saving..." : "Save Changes"}
               </Button>
-              <Button variant="outline" onClick={() => setShowEditForm(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => { setShowEditForm(false); setAvatarFile(null); setAvatarPreview(null); }}>Cancel</Button>
             </div>
           </CardContent>
         </Card>
