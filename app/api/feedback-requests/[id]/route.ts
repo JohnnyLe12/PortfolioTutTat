@@ -62,6 +62,23 @@ export async function GET(
       return errorResponse('Feedback request not found', 404, 'NOT_FOUND')
     }
 
+    // Enrich buddy info from BuddyProfile if buddy Profile has generic name
+    let buddyData = feedbackRequest.buddy
+    if (buddyData && buddyData.userId) {
+      const buddyProfile = await prisma.buddyProfile.findUnique({
+        where: { userId: buddyData.userId },
+        select: { fullName: true, avatarUrl: true },
+      })
+      if (buddyProfile && buddyProfile.fullName) {
+        buddyData = { ...buddyData, fullName: buddyProfile.fullName, avatarUrl: buddyProfile.avatarUrl || buddyData.avatarUrl }
+      }
+    }
+
+    const responseData = {
+      ...feedbackRequest,
+      buddy: buddyData,
+    }
+
     // Only the related mentee or buddy can view the feedback request
     const isMentee = feedbackRequest.mentee.userId === userId
     const isBuddy = feedbackRequest.buddy?.userId === userId
@@ -70,7 +87,7 @@ export async function GET(
       return errorResponse('Forbidden', 403, 'FORBIDDEN')
     }
 
-    return successResponse(feedbackRequest)
+    return successResponse(responseData)
   } catch (err) {
     console.error('[GET /api/feedback-requests/:id]', err)
     return errorResponse('Internal server error', 500, 'INTERNAL_ERROR')

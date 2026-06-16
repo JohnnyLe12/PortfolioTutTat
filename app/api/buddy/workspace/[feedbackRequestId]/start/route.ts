@@ -32,10 +32,34 @@ export async function PATCH(
     }
 
     // Also check if buddy has a Profile record (for FeedbackRequest.buddyId assignment)
-    const buddyProfile = await prisma.profile.findUnique({
+    // If not, create one from BuddyProfile data so we can assign buddyId
+    let buddyProfile = await prisma.profile.findUnique({
       where: { userId },
       select: { id: true },
     })
+
+    if (!buddyProfile) {
+      // Create a Profile record mirroring BuddyProfile data
+      const fullBuddyProfile = await prisma.buddyProfile.findUnique({
+        where: { userId },
+        select: { fullName: true, roleTitle: true, bio: true, avatarUrl: true, major: true, skills: true, designTools: true, interests: true },
+      })
+      buddyProfile = await prisma.profile.create({
+        data: {
+          userId,
+          fullName: fullBuddyProfile?.fullName || 'Buddy',
+          roleTitle: fullBuddyProfile?.roleTitle || null,
+          bio: fullBuddyProfile?.bio || null,
+          avatarUrl: fullBuddyProfile?.avatarUrl || null,
+          major: fullBuddyProfile?.major || null,
+          skills: fullBuddyProfile?.skills || [],
+          designTools: fullBuddyProfile?.designTools || [],
+          interests: fullBuddyProfile?.interests || [],
+          completionPct: 0,
+        },
+        select: { id: true },
+      })
+    }
 
     // Find the FeedbackRequest
     const feedbackRequest = await prisma.feedbackRequest.findUnique({
@@ -75,15 +99,13 @@ export async function PATCH(
 
     // Perform transition
     const updated = await prisma.$transaction(async (tx) => {
-      // Update status + optionally assign buddyId if Profile exists
-      const updateData: { status: 'in_review'; buddyId?: string } = { status: 'in_review' }
-      if (buddyProfile) {
-        updateData.buddyId = buddyProfile.id
-      }
-
+      // Always assign buddyId (we ensured buddyProfile exists above)
       const updatedRequest = await tx.feedbackRequest.update({
         where: { id: feedbackRequestId },
-        data: updateData,
+        data: {
+          buddyId: buddyProfile.id,
+          status: 'in_review',
+        },
       })
 
       // Notify mentee

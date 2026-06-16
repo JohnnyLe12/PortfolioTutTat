@@ -41,16 +41,35 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    const result = feedbackRequests.map((fr) => ({
-      id: fr.id,
-      projectId: fr.projectId,
-      projectName: fr.project.title,
-      buddyId: fr.buddyId,
-      buddyName: fr.buddy?.fullName ?? null,
-      note: fr.note,
-      status: fr.status,
-      createdAt: fr.createdAt,
-      updatedAt: fr.updatedAt,
+    const result = await Promise.all(feedbackRequests.map(async (fr) => {
+      // Get buddy name - from Profile (via relation) or BuddyProfile if Profile doesn't exist
+      let buddyName = fr.buddy?.fullName ?? null
+      if (!buddyName && fr.buddyId) {
+        // Try to get name from BuddyProfile via the Profile's userId
+        const buddyProfileUser = await prisma.profile.findUnique({
+          where: { id: fr.buddyId },
+          select: { userId: true },
+        })
+        if (buddyProfileUser) {
+          const bp = await prisma.buddyProfile.findUnique({
+            where: { userId: buddyProfileUser.userId },
+            select: { fullName: true },
+          })
+          buddyName = bp?.fullName ?? null
+        }
+      }
+
+      return {
+        id: fr.id,
+        projectId: fr.projectId,
+        projectName: fr.project.title,
+        buddyId: fr.buddyId,
+        buddyName,
+        note: fr.note,
+        status: fr.status,
+        createdAt: fr.createdAt,
+        updatedAt: fr.updatedAt,
+      }
     }))
 
     return successResponse(result)

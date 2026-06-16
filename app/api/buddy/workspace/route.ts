@@ -92,13 +92,13 @@ export async function GET(req: NextRequest) {
           })
         }
 
-        // If none assigned, look for unassigned pending requests
+        // If none assigned, look for unassigned pending OR in_review requests
         if (!feedbackRequest) {
           feedbackRequest = await prisma.feedbackRequest.findFirst({
             where: {
               projectId: bookmark.project.id,
               buddyId: null,
-              status: 'pending',
+              status: { in: ['pending', 'in_review'] },
             },
             orderBy: { createdAt: 'desc' },
             select: { id: true, status: true },
