@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings, Trash2, AlertTriangle, Loader2 } from "lucide-react";
+import { Settings, Trash2, AlertTriangle, Loader2, Globe } from "lucide-react";
 
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -15,9 +15,11 @@ import {
   DialogFooter,
 } from "../components/ui/dialog";
 import { apiDelete, clearTokens } from "../lib/api";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
+  const { language, setLanguage, t } = useLanguage();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -48,21 +50,46 @@ export default function SettingsPage() {
           <Settings className="w-5 h-5 text-gray-600" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-sm text-gray-600">Manage your account preferences</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("settings.title")}</h1>
+          <p className="text-sm text-gray-600">{t("settings.subtitle")}</p>
         </div>
       </div>
+
+      {/* Language Switcher */}
+      <Card className="border-2 mb-6">
+        <CardContent className="p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Globe className="w-5 h-5" />
+            {t("settings.language")}
+          </h2>
+          <div className="flex gap-3">
+            <Button
+              variant={language === "vi" ? "default" : "outline"}
+              onClick={() => setLanguage("vi")}
+              className={language === "vi" ? "bg-indigo-600" : ""}
+            >
+              🇻🇳 Tiếng Việt
+            </Button>
+            <Button
+              variant={language === "en" ? "default" : "outline"}
+              onClick={() => setLanguage("en")}
+              className={language === "en" ? "bg-indigo-600" : ""}
+            >
+              🇬🇧 English
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Danger Zone */}
       <Card className="border-2 border-red-200">
         <CardContent className="p-6">
           <h2 className="text-lg font-bold text-red-700 mb-2 flex items-center gap-2">
             <AlertTriangle className="w-5 h-5" />
-            Danger Zone
+            {t("settings.dangerZone")}
           </h2>
           <p className="text-gray-600 mb-4">
-            Once you delete your account, there is no going back. All your data including
-            portfolios, feedback, messages, and profile information will be permanently removed.
+            {t("settings.deleteWarning")}
           </p>
           <Button
             variant="outline"
@@ -70,7 +97,7 @@ export default function SettingsPage() {
             onClick={() => setShowDeleteDialog(true)}
           >
             <Trash2 className="w-4 h-4 mr-2" />
-            Delete Account
+            {t("settings.deleteAccount")}
           </Button>
         </CardContent>
       </Card>
@@ -81,7 +108,7 @@ export default function SettingsPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-red-600">
               <AlertTriangle className="h-5 w-5" />
-              Delete Account Permanently
+              {t("settings.deleteConfirm")}
             </DialogTitle>
             <DialogDescription>
               This action is irreversible. All your data will be permanently deleted including:
@@ -99,7 +126,7 @@ export default function SettingsPage() {
 
           <div className="mt-4">
             <Label className="text-sm font-medium">
-              Type <span className="font-bold text-red-600">DELETE</span> to confirm
+              {t("settings.typeDelete")}
             </Label>
             <Input
               value={confirmText}
@@ -117,7 +144,7 @@ export default function SettingsPage() {
               onClick={() => { setShowDeleteDialog(false); setConfirmText(""); setError(""); }}
               disabled={deleting}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               className="bg-red-600 hover:bg-red-700"
@@ -132,7 +159,7 @@ export default function SettingsPage() {
               ) : (
                 <>
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete My Account
+                  {t("settings.deleteConfirm")}
                 </>
               )}
             </Button>

@@ -13,7 +13,7 @@ const ROLES = [
   {
     value: "buddy",
     label: "Buddy",
-    description: "Review portfolios and mentor others",
+    description: "Review portfolios and help others",
     icon: Briefcase,
   },
   {

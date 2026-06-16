@@ -22,9 +22,11 @@ import {
 
 import { apiGet, getAccessToken } from "../../lib/api";
 import NotificationBell from "../notification/NotificationBell";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function RootLayout() {
   const location = useLocation();
+  const { t } = useLanguage();
   const [feedbackUnreadCount, setFeedbackUnreadCount] = useState(0);
 
   const isLandingPage =
@@ -132,19 +134,20 @@ export default function RootLayout() {
                 role={userRole}
                 pathname={location.pathname}
                 feedbackUnreadCount={feedbackUnreadCount}
+                t={t}
               />
 
               <div className="pt-4 mt-4 border-t space-y-2">
                 <SidebarLink
                   to="/settings"
                   icon={<Settings />}
-                  text="Settings"
+                  text={t("nav.settings")}
                 />
 
                 <SidebarLink
                   to="/"
                   icon={<LogOut />}
-                  text="Logout"
+                  text={t("nav.logout")}
                 />
               </div>
             </nav>
@@ -222,42 +225,42 @@ export default function RootLayout() {
 }
 
 /* ROLE-BASED SIDEBAR */
-function RoleSidebar({ role, pathname, feedbackUnreadCount }) {
+function RoleSidebar({ role, pathname, feedbackUnreadCount, t }) {
   switch (role) {
     case 'buddy':
-      return <BuddySidebar pathname={pathname} />;
+      return <BuddySidebar pathname={pathname} t={t} />;
     case 'company':
-      return <CompanySidebar pathname={pathname} />;
+      return <CompanySidebar pathname={pathname} t={t} />;
     case 'admin':
-      return <AdminSidebar pathname={pathname} feedbackUnreadCount={feedbackUnreadCount} />;
+      return <AdminSidebar pathname={pathname} feedbackUnreadCount={feedbackUnreadCount} t={t} />;
     case 'mentee':
     default:
-      return <MenteeSidebar pathname={pathname} feedbackUnreadCount={feedbackUnreadCount} />;
+      return <MenteeSidebar pathname={pathname} feedbackUnreadCount={feedbackUnreadCount} t={t} />;
   }
 }
 
 /* MENTEE SIDEBAR */
-function MenteeSidebar({ pathname, feedbackUnreadCount }) {
+function MenteeSidebar({ pathname, feedbackUnreadCount, t }) {
   return (
     <>
       <SidebarLink
         to="/dashboard"
         icon={<LayoutDashboard />}
-        text="Dashboard"
+        text={t("nav.dashboard")}
         active={pathname === "/dashboard"}
       />
 
       <SidebarLink
         to="/portfolio-builder"
         icon={<Folder />}
-        text="Portfolio"
+        text={t("nav.portfolio")}
         active={pathname.startsWith("/portfolio")}
       />
 
       <SidebarLink
         to="/feedback-requests"
         icon={<MessageSquare />}
-        text="Feedback"
+        text={t("nav.feedback")}
         active={pathname.startsWith("/feedback")}
         badge={feedbackUnreadCount}
       />
@@ -265,14 +268,14 @@ function MenteeSidebar({ pathname, feedbackUnreadCount }) {
       <SidebarLink
         to="/jobs"
         icon={<Briefcase />}
-        text="Jobs"
+        text={t("nav.jobs")}
         active={pathname === "/jobs" || pathname.startsWith("/jobs/")}
       />
 
       <SidebarLink
         to="/applications"
         icon={<ClipboardList />}
-        text="Applications"
+        text={t("nav.applications")}
         active={pathname === "/applications"}
       />
     </>
@@ -280,27 +283,27 @@ function MenteeSidebar({ pathname, feedbackUnreadCount }) {
 }
 
 /* BUDDY SIDEBAR */
-function BuddySidebar({ pathname }) {
+function BuddySidebar({ pathname, t }) {
   return (
     <>
       <SidebarLink
         to="/buddy-dashboard"
         icon={<LayoutDashboard />}
-        text="Dashboard"
+        text={t("nav.dashboard")}
         active={pathname === "/buddy-dashboard"}
       />
 
       <SidebarLink
         to="/browse-portfolios"
         icon={<BookOpen />}
-        text="Browse Portfolios"
+        text={t("nav.browsePortfolios")}
         active={pathname === "/browse-portfolios"}
       />
 
       <SidebarLink
         to="/feedback-workspace"
         icon={<MessageSquare />}
-        text="Feedback Workspace"
+        text={t("nav.feedbackWorkspace")}
         active={pathname === "/feedback-workspace"}
       />
     </>
@@ -308,13 +311,13 @@ function BuddySidebar({ pathname }) {
 }
 
 /* COMPANY SIDEBAR */
-function CompanySidebar({ pathname }) {
+function CompanySidebar({ pathname, t }) {
   return (
     <>
       <SidebarLink
         to="/company-dashboard"
         icon={<LayoutDashboard />}
-        text="Dashboard"
+        text={t("nav.dashboard")}
         active={pathname === "/company-dashboard"}
       />
 
@@ -336,13 +339,13 @@ function CompanySidebar({ pathname }) {
 }
 
 /* ADMIN SIDEBAR — shows all navigation items */
-function AdminSidebar({ pathname, feedbackUnreadCount }) {
+function AdminSidebar({ pathname, feedbackUnreadCount, t }) {
   return (
     <>
       <SidebarLink
         to="/dashboard"
         icon={<LayoutDashboard />}
-        text="Dashboard"
+        text={t("nav.dashboard")}
         active={pathname === "/dashboard"}
       />
 
@@ -363,28 +366,28 @@ function AdminSidebar({ pathname, feedbackUnreadCount }) {
       <SidebarLink
         to="/portfolio-builder"
         icon={<Folder />}
-        text="Portfolio"
+        text={t("nav.portfolio")}
         active={pathname.startsWith("/portfolio")}
       />
 
       <SidebarLink
         to="/browse-portfolios"
         icon={<BookOpen />}
-        text="Browse Portfolios"
+        text={t("nav.browsePortfolios")}
         active={pathname === "/browse-portfolios"}
       />
 
       <SidebarLink
         to="/feedback-workspace"
         icon={<MessageSquare />}
-        text="Feedback Workspace"
+        text={t("nav.feedbackWorkspace")}
         active={pathname === "/feedback-workspace"}
       />
 
       <SidebarLink
         to="/feedback-requests"
         icon={<MessageSquare />}
-        text="Feedback Requests"
+        text={t("nav.feedback")}
         active={pathname.startsWith("/feedback-requests")}
         badge={feedbackUnreadCount}
       />
@@ -392,7 +395,7 @@ function AdminSidebar({ pathname, feedbackUnreadCount }) {
       <SidebarLink
         to="/jobs"
         icon={<Briefcase />}
-        text="Jobs"
+        text={t("nav.jobs")}
         active={pathname === "/jobs" || pathname.startsWith("/jobs/")}
       />
 
@@ -420,7 +423,7 @@ function AdminSidebar({ pathname, feedbackUnreadCount }) {
       <SidebarLink
         to="/applications"
         icon={<ClipboardList />}
-        text="Applications"
+        text={t("nav.applications")}
         active={pathname === "/applications"}
       />
     </>

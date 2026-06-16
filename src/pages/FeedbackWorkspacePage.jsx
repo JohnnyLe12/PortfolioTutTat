@@ -19,6 +19,7 @@ import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Textarea } from "../components/ui/textarea";
 import ChatPanel from "../components/ChatPanel";
+import { useLanguage } from "../contexts/LanguageContext";
 
 const STATUS_CONFIG = {
   "Not Started": { className: "bg-gray-100 text-gray-700" },
@@ -29,6 +30,7 @@ const STATUS_CONFIG = {
 const ITEMS_PER_PAGE = 20;
 
 export default function FeedbackWorkspacePage() {
+  const { t } = useLanguage();
   const [workspaceItems, setWorkspaceItems] = useState([]);
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: ITEMS_PER_PAGE, totalPages: 1 });
   const [loading, setLoading] = useState(true);
@@ -99,8 +101,8 @@ export default function FeedbackWorkspacePage() {
           <ClipboardList className="w-5 h-5 text-indigo-600" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Feedback Workspace</h1>
-          <p className="text-sm text-gray-600">Manage your bookmarked portfolios and provide reviews</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("workspace.title")}</h1>
+          <p className="text-sm text-gray-600">{t("workspace.subtitle")}</p>
         </div>
       </div>
 
@@ -119,8 +121,8 @@ export default function FeedbackWorkspacePage() {
       ) : workspaceItems.length === 0 ? (
         <div className="text-center py-20">
           <ClipboardList className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-700 mb-2">No bookmarked portfolios yet</h3>
-          <p className="text-gray-500">Browse portfolios and bookmark them to start reviewing.</p>
+          <h3 className="text-lg font-medium text-gray-700 mb-2">{t("workspace.noBookmarks")}</h3>
+          <p className="text-gray-500">{t("workspace.browseToBookmark")}</p>
         </div>
       ) : (
         <>
@@ -142,19 +144,19 @@ export default function FeedbackWorkspacePage() {
                       {item.reviewStatus === "Not Started" && item.feedbackRequestId && (
                         <Button size="sm" onClick={() => handleStartReview(item)} disabled={actionLoading === item.feedbackRequestId} className="bg-indigo-600 hover:bg-indigo-700 text-white">
                           {actionLoading === item.feedbackRequestId ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Play className="w-4 h-4 mr-1" />}
-                          Start Review
+                          {t("workspace.startReview")}
                         </Button>
                       )}
 
                       {item.reviewStatus === "In Progress" && (
                         <Button size="sm" onClick={() => setActiveReview(item)} className="bg-blue-600 hover:bg-blue-700 text-white">
-                          <MessageSquare className="w-4 h-4 mr-1" /> Continue Review
+                          <MessageSquare className="w-4 h-4 mr-1" /> {t("workspace.continueReview")}
                         </Button>
                       )}
 
                       {item.reviewStatus === "Completed" && (
                         <Button size="sm" variant="outline" onClick={() => setViewingCompleted(item)}>
-                          <Eye className="w-4 h-4 mr-1" /> View Review
+                          <Eye className="w-4 h-4 mr-1" /> {t("workspace.viewReview")}
                         </Button>
                       )}
                     </div>

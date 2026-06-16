@@ -23,8 +23,10 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { apiGet, apiPut, apiPost } from "../lib/api";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function BuddyDashboardPage() {
+  const { t } = useLanguage();
   const [stats, setStats] = useState({
     completedReviews: 0,
     pendingReviews: 0,
@@ -372,7 +374,7 @@ export default function BuddyDashboardPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Completed Reviews</p>
+              <p className="text-sm text-gray-600">{t("dashboard.completedReviews")}</p>
               <CheckCircle2 className="h-4 w-4 text-green-500" />
             </div>
             <h2 className="text-3xl font-bold">{stats.completedReviews}</h2>
@@ -382,7 +384,7 @@ export default function BuddyDashboardPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Pending Reviews</p>
+              <p className="text-sm text-gray-600">{t("dashboard.pendingReviews")}</p>
               <Clock className="h-4 w-4 text-yellow-500" />
             </div>
             <h2 className="text-3xl font-bold">{stats.pendingReviews}</h2>
@@ -392,7 +394,7 @@ export default function BuddyDashboardPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Active Messages</p>
+              <p className="text-sm text-gray-600">{t("dashboard.activeMessages")}</p>
               <MessageSquare className="h-4 w-4 text-blue-500" />
             </div>
             <h2 className="text-3xl font-bold">{stats.activeMessages}</h2>
@@ -402,7 +404,7 @@ export default function BuddyDashboardPage() {
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Helpful Rating</p>
+              <p className="text-sm text-gray-600">{t("dashboard.helpfulRating")}</p>
               <ThumbsUp className="h-4 w-4 text-purple-500" />
             </div>
             <h2 className="text-3xl font-bold">{Math.round(stats.helpfulRating)}</h2>
@@ -420,9 +422,9 @@ export default function BuddyDashboardPage() {
                   <CheckCircle2 className="h-6 w-6 text-purple-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Browse Portfolios</h3>
+                  <h3 className="font-semibold">{t("dashboard.browsePortfolios")}</h3>
                   <p className="text-sm text-gray-600">
-                    Find portfolios to review
+                    {t("dashboard.findPortfolios")}
                   </p>
                 </div>
               </div>
@@ -438,9 +440,9 @@ export default function BuddyDashboardPage() {
                   <MessageSquare className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Feedback Workspace</h3>
+                  <h3 className="font-semibold">{t("dashboard.feedbackWorkspace")}</h3>
                   <p className="text-sm text-gray-600">
-                    Manage your active reviews
+                    {t("dashboard.manageReviews")}
                   </p>
                 </div>
               </div>
@@ -454,16 +456,16 @@ export default function BuddyDashboardPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Recent Feedback Requests</CardTitle>
+              <CardTitle>{t("dashboard.recentRequests")}</CardTitle>
               <CardDescription>
-                Your latest assigned reviews
+                {t("dashboard.latestReviews")}
               </CardDescription>
             </div>
             <Link
               to="/feedback-workspace"
               className="text-sm text-purple-600 hover:text-purple-700 inline-flex items-center gap-1"
             >
-              View All
+              {t("dashboard.viewAll")}
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -473,9 +475,9 @@ export default function BuddyDashboardPage() {
           {recentItems.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Clock className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p className="font-medium">No feedback requests yet</p>
+              <p className="font-medium">{t("dashboard.noRequests")}</p>
               <p className="text-sm mt-1">
-                Browse portfolios to start reviewing
+                {t("dashboard.browseToStart")}
               </p>
             </div>
           ) : (

@@ -261,7 +261,7 @@ export default function MentorFeedbackPage() {
               <div className="text-5xl font-bold text-indigo-600 mb-2">
                 {feedbacks.length}
               </div>
-              <div className="text-sm text-gray-600 font-medium">Mentor Reviews</div>
+              <div className="text-sm text-gray-600 font-medium">Buddy Reviews</div>
             </div>
             <div className="text-center">
               <div className="text-5xl font-bold text-indigo-600 mb-2">
@@ -277,7 +277,7 @@ export default function MentorFeedbackPage() {
         {/* Feedback Comments */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Mentor Comments</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Buddy Comments</h2>
             <Badge className="px-3 py-1">{feedbacks.length} reviews</Badge>
           </div>
 
@@ -392,7 +392,7 @@ export default function MentorFeedbackPage() {
                 Want More Feedback?
               </h3>
               <p className="text-gray-600 mb-4">
-                Request additional reviews from other mentors in the community
+                Request additional reviews from other buddies in the community
               </p>
               <Button
                 onClick={handleRequestMoreReviews}
@@ -412,7 +412,7 @@ export default function MentorFeedbackPage() {
               <CardHeader>
                 <CardTitle>Key Suggestions</CardTitle>
                 <CardDescription>
-                  Common recommendations from mentors
+                  Common recommendations from buddies
                 </CardDescription>
               </CardHeader>
               <CardContent>
