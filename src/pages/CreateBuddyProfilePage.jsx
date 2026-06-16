@@ -284,12 +284,7 @@ export default function CreateBuddyProfilePage() {
         try {
           const formData = new FormData();
           formData.append("file", avatarFile);
-          const token = localStorage.getItem("token");
-          await fetch("/api/buddy/profile/me/avatar", {
-            method: "POST",
-            headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-            body: formData,
-          });
+          await apiPost("/buddy/profile/me/avatar", formData);
         } catch (err) {
           console.error("Avatar upload failed:", err);
           // Don't block profile creation if avatar upload fails

@@ -22,7 +22,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
-import { apiGet, apiPut } from "../lib/api";
+import { apiGet, apiPut, apiPost } from "../lib/api";
 
 export default function BuddyDashboardPage() {
   const [stats, setStats] = useState({
@@ -334,12 +334,7 @@ export default function BuddyDashboardPage() {
                   if (avatarFile) {
                     const formData = new FormData();
                     formData.append("file", avatarFile);
-                    const token = localStorage.getItem("token");
-                    await fetch("/api/buddy/profile/me/avatar", {
-                      method: "POST",
-                      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-                      body: formData,
-                    });
+                    await apiPost("/buddy/profile/me/avatar", formData);
                   }
 
                   await fetchProfile();
