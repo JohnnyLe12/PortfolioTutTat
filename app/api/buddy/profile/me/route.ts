@@ -110,6 +110,19 @@ export async function PUT(req: NextRequest) {
       data: updateData as any,
     })
 
+    // Sync Profile record if it exists (used by FeedbackRequest relations)
+    const profileRecord = await prisma.profile.findUnique({ where: { userId }, select: { id: true } })
+    if (profileRecord) {
+      const profileSync: Record<string, unknown> = {}
+      if (data.fullName !== undefined) profileSync.fullName = data.fullName
+      if (data.roleTitle !== undefined) profileSync.roleTitle = data.roleTitle
+      if (data.bio !== undefined) profileSync.bio = data.bio
+      if (data.avatarUrl !== undefined) profileSync.avatarUrl = data.avatarUrl
+      if (Object.keys(profileSync).length > 0) {
+        await prisma.profile.update({ where: { userId }, data: profileSync })
+      }
+    }
+
     return successResponse(updatedProfile)
   } catch (err) {
     console.error('[PUT /api/buddy/profile/me]', err)

@@ -65,6 +65,12 @@ export async function POST(req: NextRequest) {
       data: { avatarUrl },
     })
 
+    // Sync Profile record if exists
+    const profileRecord = await prisma.profile.findUnique({ where: { userId }, select: { id: true } })
+    if (profileRecord) {
+      await prisma.profile.update({ where: { userId }, data: { avatarUrl } })
+    }
+
     return successResponse({ avatarUrl })
   } catch (err) {
     console.error('[POST /api/buddy/profile/me/avatar]', err)

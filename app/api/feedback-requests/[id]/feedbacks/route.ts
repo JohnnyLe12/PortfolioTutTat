@@ -45,24 +45,45 @@ export async function GET(
             fullName: true,
             avatarUrl: true,
             roleTitle: true,
+            userId: true,
           },
         },
       },
     })
 
-    const result = feedbacks.map((f) => ({
-      id: f.id,
-      feedbackRequestId: f.feedbackRequestId,
-      buddyId: f.buddyId,
-      buddyName: f.buddy.fullName,
-      buddyAvatar: f.buddy.avatarUrl,
-      buddyRoleTitle: f.buddy.roleTitle,
-      rating: f.rating,
-      comment: f.comment,
-      suggestions: f.suggestions,
-      helpfulCount: f.helpfulCount,
-      createdAt: f.createdAt,
-      updatedAt: f.updatedAt,
+    // Enrich buddy info from BuddyProfile (which has the latest name/avatar)
+    const result = await Promise.all(feedbacks.map(async (f) => {
+      let buddyName = f.buddy.fullName
+      let buddyAvatar = f.buddy.avatarUrl
+      let buddyRoleTitle = f.buddy.roleTitle
+
+      // Check BuddyProfile for most up-to-date info
+      if (f.buddy.userId) {
+        const bp = await prisma.buddyProfile.findUnique({
+          where: { userId: f.buddy.userId },
+          select: { fullName: true, avatarUrl: true, roleTitle: true },
+        })
+        if (bp) {
+          buddyName = bp.fullName || buddyName
+          buddyAvatar = bp.avatarUrl || buddyAvatar
+          buddyRoleTitle = bp.roleTitle || buddyRoleTitle
+        }
+      }
+
+      return {
+        id: f.id,
+        feedbackRequestId: f.feedbackRequestId,
+        buddyId: f.buddyId,
+        buddyName,
+        buddyAvatar,
+        buddyRoleTitle,
+        rating: f.rating,
+        comment: f.comment,
+        suggestions: f.suggestions,
+        helpfulCount: f.helpfulCount,
+        createdAt: f.createdAt,
+        updatedAt: f.updatedAt,
+      }
     }))
 
     return successResponse(result)
