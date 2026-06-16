@@ -20,8 +20,16 @@ export async function GET(req: NextRequest) {
       return errorResponse('Profile not found', 404, 'NOT_FOUND')
     }
 
+    const { searchParams } = new URL(req.url)
+    const statusFilter = searchParams.get('status')
+
+    const whereClause: Record<string, unknown> = { menteeId: profile.id }
+    if (statusFilter && ['pending', 'in_review', 'completed'].includes(statusFilter)) {
+      whereClause.status = statusFilter
+    }
+
     const feedbackRequests = await prisma.feedbackRequest.findMany({
-      where: { menteeId: profile.id },
+      where: whereClause,
       orderBy: { createdAt: 'desc' },
       include: {
         project: {
