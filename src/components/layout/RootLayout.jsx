@@ -50,6 +50,8 @@ export default function RootLayout() {
     location.pathname.startsWith("/company-dashboard") ||
     location.pathname.startsWith("/job-creation") ||
     location.pathname.startsWith("/applicants-tracker") ||
+    location.pathname.startsWith("/settings") ||
+    location.pathname.startsWith("/buddy-profile");
     location.pathname.startsWith("/advanced-job-search");
 
   // Get current user role from localStorage
@@ -113,7 +115,15 @@ export default function RootLayout() {
               ) : isDashboardRoute ? (
                 <NotificationBell />
               ) : (
-                <Link to="/dashboard">
+                <Link to={(() => {
+                  try {
+                    const stored = localStorage.getItem('user');
+                    const u = stored ? JSON.parse(stored) : null;
+                    if (u?.role === 'buddy') return '/buddy-dashboard';
+                    if (u?.role === 'company') return '/company-dashboard';
+                    return '/dashboard';
+                  } catch { return '/dashboard'; }
+                })()}>
                   <button className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg transition-all">
                     Dashboard
                   </button>

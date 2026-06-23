@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Plus,
   ClipboardList,
+  Pencil,
 } from "lucide-react";
 
 import {
@@ -16,7 +17,11 @@ import {
   CardTitle,
   CardDescription,
 } from "../components/ui/card";
-import { apiGet } from "../lib/api";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Textarea } from "../components/ui/textarea";
+import { apiGet, apiPut } from "../lib/api";
 
 export default function CompanyDashboardPage() {
   const [stats, setStats] = useState({
@@ -25,12 +30,26 @@ export default function CompanyDashboardPage() {
     newApplicantsThisWeek: 0,
   });
   const [recentJobs, setRecentJobs] = useState([]);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editData, setEditData] = useState({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchDashboardStats();
+    fetchProfile();
   }, []);
+
+  async function fetchProfile() {
+    try {
+      const response = await apiGet("/company/profile/me");
+      setProfile(response.data || response);
+    } catch (err) {
+      console.error("Failed to fetch company profile:", err);
+    }
+  }
 
   async function fetchDashboardStats() {
     try {
@@ -80,13 +99,82 @@ export default function CompanyDashboardPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Header */}
+      {/* Header with Company Profile */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Company Dashboard</h1>
-        <p className="text-gray-600">
-          Track your recruitment activity and manage job postings
-        </p>
+        <Card className="border-2">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-bold">{profile?.companyName || "Company Dashboard"}</h1>
+                {profile?.summary && <p className="text-gray-600 mt-1">{profile.summary}</p>}
+                {profile?.websiteUrl && (
+                  <a href={profile.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-600 hover:underline mt-1 inline-block">{profile.websiteUrl}</a>
+                )}
+              </div>
+              <Button variant="outline" size="sm" onClick={() => {
+                setEditData({
+                  companyName: profile?.companyName || "",
+                  summary: profile?.summary || "",
+                  productsServices: profile?.productsServices || "",
+                  websiteUrl: profile?.websiteUrl || "",
+                  hrContactEmail: profile?.hrContactEmail || "",
+                  hrContactPhone: profile?.hrContactPhone || "",
+                  employeeCount: profile?.employeeCount || "",
+                  officeAddress: profile?.officeAddress || "",
+                });
+                setShowEditForm(true);
+              }}>
+                <Pencil className="w-4 h-4 mr-1" /> Edit Profile
+              </Button>
+            </div>
+            <div className="grid md:grid-cols-3 gap-4 text-sm">
+              {profile?.hrContactEmail && <div><span className="text-gray-500">HR Email:</span> {profile.hrContactEmail}</div>}
+              {profile?.hrContactPhone && <div><span className="text-gray-500">Phone:</span> {profile.hrContactPhone}</div>}
+              {profile?.employeeCount && <div><span className="text-gray-500">Employees:</span> {profile.employeeCount}</div>}
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Edit Profile Form */}
+      {showEditForm && (
+        <Card className="mb-8 border-2 border-indigo-200">
+          <CardContent className="p-6 space-y-4">
+            <h3 className="font-bold text-lg">Edit Company Profile</h3>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div><Label>Company Name *</Label><Input value={editData.companyName} onChange={(e) => setEditData({...editData, companyName: e.target.value})} className="mt-1" /></div>
+              <div><Label>Website URL</Label><Input value={editData.websiteUrl} onChange={(e) => setEditData({...editData, websiteUrl: e.target.value})} placeholder="https://..." className="mt-1" /></div>
+            </div>
+            <div><Label>Summary</Label><Textarea value={editData.summary} onChange={(e) => setEditData({...editData, summary: e.target.value})} placeholder="Brief company description..." className="mt-1" /></div>
+            <div><Label>Products / Services</Label><Textarea value={editData.productsServices} onChange={(e) => setEditData({...editData, productsServices: e.target.value})} className="mt-1" /></div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div><Label>HR Contact Email</Label><Input value={editData.hrContactEmail} onChange={(e) => setEditData({...editData, hrContactEmail: e.target.value})} className="mt-1" /></div>
+              <div><Label>HR Contact Phone</Label><Input value={editData.hrContactPhone} onChange={(e) => setEditData({...editData, hrContactPhone: e.target.value})} className="mt-1" /></div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div><Label>Employee Count</Label><Input value={editData.employeeCount} onChange={(e) => setEditData({...editData, employeeCount: e.target.value})} placeholder="e.g. 50-100" className="mt-1" /></div>
+              <div><Label>Office Address</Label><Input value={editData.officeAddress} onChange={(e) => setEditData({...editData, officeAddress: e.target.value})} className="mt-1" /></div>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button className="bg-indigo-600 hover:bg-indigo-700" disabled={saving} onClick={async () => {
+                setSaving(true);
+                try {
+                  await apiPut("/company/profile/me", editData);
+                  await fetchProfile();
+                  setShowEditForm(false);
+                } catch (err) {
+                  setError(err.message || "Failed to save profile");
+                } finally {
+                  setSaving(false);
+                }
+              }}>
+                {saving ? "Saving..." : "Save Changes"}
+              </Button>
+              <Button variant="outline" onClick={() => setShowEditForm(false)}>Cancel</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Error State */}
       {error && (
