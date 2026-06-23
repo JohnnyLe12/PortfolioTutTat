@@ -53,7 +53,7 @@ export default function CreateCompanyProfilePage() {
       try {
         await apiGet("/company/profile/me");
         if (!cancelled) {
-          navigate("/edit-company-profile", { replace: true });
+          navigate("/company-dashboard", { replace: true });
         }
       } catch {
         // 404 or error means no profile — stay on create page
