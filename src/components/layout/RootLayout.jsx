@@ -272,7 +272,6 @@ function MenteeSidebar({ pathname, feedbackUnreadCount, t }) {
         icon={<MessageSquare />}
         text={t("nav.feedback")}
         active={pathname.startsWith("/feedback")}
-        badge={feedbackUnreadCount}
       />
 
       <SidebarLink
@@ -399,7 +398,6 @@ function AdminSidebar({ pathname, feedbackUnreadCount, t }) {
         icon={<MessageSquare />}
         text={t("nav.feedback")}
         active={pathname.startsWith("/feedback-requests")}
-        badge={feedbackUnreadCount}
       />
 
       <SidebarLink
