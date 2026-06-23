@@ -31,11 +31,30 @@ export async function GET(
       },
     })
 
-    if (!profile) {
+    // If not found by profile ID, try by userId
+    const result = profile || await prisma.profile.findUnique({
+      where: { userId: id },
+      select: {
+        id: true,
+        fullName: true,
+        roleTitle: true,
+        bio: true,
+        avatarUrl: true,
+        major: true,
+        skills: true,
+        designTools: true,
+        interests: true,
+        socialLinks: true,
+        completionPct: true,
+        createdAt: true,
+      },
+    })
+
+    if (!result) {
       return errorResponse('Profile not found', 404, 'NOT_FOUND')
     }
 
-    return successResponse(profile)
+    return successResponse(result)
   } catch (err) {
     console.error('[GET /api/profiles/:id]', err)
     return errorResponse('Internal server error', 500, 'INTERNAL_ERROR')
