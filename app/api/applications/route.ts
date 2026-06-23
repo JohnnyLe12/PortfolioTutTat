@@ -87,13 +87,34 @@ export async function POST(req: NextRequest) {
 
     const { jobId, portfolioIds } = parsed.data
 
-    // Validate the job exists
+    // Validate the job exists and is active
     const job = await prisma.job.findUnique({
       where: { id: jobId },
     })
 
     if (!job) {
       return errorResponse('Job not found', 404, 'NOT_FOUND')
+    }
+
+    if (!job.isActive) {
+      return errorResponse('This job is no longer accepting applications', 400, 'VALIDATION_ERROR')
+    }
+
+    // Check if job has open slots remaining
+    if (job.openSlots !== null && job.openSlots > 0) {
+      const currentApplicationCount = await prisma.application.count({
+        where: {
+          jobId,
+          status: { in: ['submitted', 'under_review', 'accepted'] },
+        },
+      })
+      if (currentApplicationCount >= job.openSlots) {
+        return errorResponse(
+          'This job has no remaining open slots. All positions have been filled.',
+          400,
+          'VALIDATION_ERROR'
+        )
+      }
     }
 
     // Validate mentee has at least 1 Public project
