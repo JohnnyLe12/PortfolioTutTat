@@ -2,9 +2,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Mail, Lock } from "lucide-react";
 import { apiPost, setTokens, ApiError } from "../lib/api.js";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function SignUpPage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +19,7 @@ export default function SignUpPage() {
 
     // Client-side validation
     if (password.length < 8) {
-      setErrors({ password: "Mật khẩu phải có ít nhất 8 ký tự" });
+      setErrors({ password: t("auth.error.passwordShort") });
       return;
     }
 
@@ -39,25 +41,25 @@ export default function SignUpPage() {
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.status === 409) {
-          setErrors({ email: "Email already registered" });
+          setErrors({ email: t("auth.error.emailRegistered") });
         } else if (err.status === 400) {
-          const msg = err.message || "Validation failed";
+          const msg = err.message || t("auth.error.validationFailed");
           if (
             msg.toLowerCase().includes("password") ||
             msg.toLowerCase().includes("short") ||
             msg.toLowerCase().includes("8")
           ) {
-            setErrors({ password: "Mật khẩu phải có ít nhất 8 ký tự" });
+            setErrors({ password: t("auth.error.passwordShort") });
           } else if (msg.toLowerCase().includes("email")) {
             setErrors({ email: msg });
           } else {
             setErrors({ general: msg });
           }
         } else {
-          setErrors({ general: err.message || "Something went wrong" });
+          setErrors({ general: err.message || t("auth.error.somethingWrong") });
         }
       } else {
-        setErrors({ general: "Network error. Please try again." });
+        setErrors({ general: t("auth.error.network") });
       }
     } finally {
       setLoading(false);
@@ -77,20 +79,22 @@ export default function SignUpPage() {
           </Link>
 
           <h1 className="text-3xl font-bold text-gray-900 mt-6">
-            Create your account
+            {t("auth.signup.title")}
           </h1>
 
           <p className="text-gray-600 text-lg mt-3">
-            Start building your creative career today
+            {t("auth.signup.subtitle")}
           </p>
         </div>
 
         {/* CARD */}
         <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-xl">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Sign Up</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {t("auth.signup.heading")}
+            </h2>
             <p className="text-gray-500 mt-1">
-              Create your account to get started
+              {t("auth.signup.subheading")}
             </p>
           </div>
 
@@ -128,7 +132,7 @@ export default function SignUpPage() {
                   20.53 7.7 23 12 23z"
                 />
               </svg>
-              Continue with Google
+              {t("auth.signup.google")}
             </button>
 
             {/* DIVIDER */}
@@ -138,7 +142,7 @@ export default function SignUpPage() {
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="bg-white px-4 text-gray-500">
-                  Or continue with email
+                  {t("auth.signup.divider")}
                 </span>
               </div>
             </div>
@@ -146,13 +150,13 @@ export default function SignUpPage() {
             {/* EMAIL */}
             <div>
               <label className="block mb-2 font-medium text-gray-700">
-                Email
+                {t("auth.signup.emailLabel")}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                 <input
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={t("auth.signup.emailPlaceholder")}
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -169,13 +173,13 @@ export default function SignUpPage() {
             {/* PASSWORD */}
             <div>
               <label className="block mb-2 font-medium text-gray-700">
-                Password
+                {t("auth.signup.passwordLabel")}
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                 <input
                   type="password"
-                  placeholder="Create a strong password"
+                  placeholder={t("auth.signup.passwordPlaceholder")}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -195,29 +199,29 @@ export default function SignUpPage() {
               disabled={loading}
               className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? "Creating account..." : "Create Account"}
+              {loading ? t("auth.signup.loading") : t("auth.signup.submit")}
             </button>
 
             {/* TERMS */}
             <p className="text-sm text-center text-gray-600">
-              By signing up, you agree to our{" "}
+              {t("auth.signup.terms")}{" "}
               <a href="#" className="text-indigo-600 font-medium">
-                Terms
+                {t("auth.signup.termsLink")}
               </a>{" "}
-              and{" "}
+              {t("auth.signup.and")}{" "}
               <a href="#" className="text-indigo-600 font-medium">
-                Privacy Policy
+                {t("auth.signup.privacyLink")}
               </a>
             </p>
 
             {/* LOGIN */}
             <div className="pt-4 border-t text-center text-gray-600">
-              Already have an account?{" "}
+              {t("auth.signup.hasAccount")}{" "}
               <Link
                 to="/login"
                 className="text-indigo-600 font-semibold hover:text-indigo-700"
               >
-                Log in
+                {t("auth.signup.loginLink")}
               </Link>
             </div>
           </form>

@@ -6,9 +6,11 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { apiPost, setTokens, ApiError } from "../lib/api.js";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,14 +50,14 @@ export default function LoginPage() {
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.status === 401) {
-          setErrors({ general: "Invalid email or password" });
+          setErrors({ general: t("auth.error.invalidCredentials") });
         } else if (err.status === 400) {
-          setErrors({ general: err.message || "Validation failed" });
+          setErrors({ general: err.message || t("auth.error.validationFailed") });
         } else {
-          setErrors({ general: err.message || "Something went wrong" });
+          setErrors({ general: err.message || t("auth.error.somethingWrong") });
         }
       } else {
-        setErrors({ general: "Network error. Please try again." });
+        setErrors({ general: t("auth.error.network") });
       }
     } finally {
       setLoading(false);
@@ -95,11 +97,11 @@ export default function LoginPage() {
             </Link>
 
             <h1 className="text-3xl font-bold text-gray-900 mt-6">
-              Welcome Back
+              {t("auth.login.title")}
             </h1>
 
             <p className="text-gray-600 text-lg mt-3">
-              Sign in to continue your creative journey
+              {t("auth.login.subtitle")}
             </p>
           </div>
 
@@ -107,11 +109,11 @@ export default function LoginPage() {
           <div className="bg-white border border-gray-200 rounded-3xl p-8 shadow-xl">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
-                Log In
+                {t("auth.login.heading")}
               </h2>
 
               <p className="text-gray-500 mt-1">
-                Enter your credentials below
+                {t("auth.login.subheading")}
               </p>
             </div>
 
@@ -144,7 +146,7 @@ export default function LoginPage() {
                   />
                 </svg>
 
-                Continue with Google
+                {t("auth.login.google")}
               </button>
 
               {/* DIVIDER */}
@@ -155,7 +157,7 @@ export default function LoginPage() {
 
                 <div className="relative flex justify-center text-sm">
                   <span className="bg-white px-4 text-gray-500">
-                    Or continue with email
+                    {t("auth.login.divider")}
                   </span>
                 </div>
               </div>
@@ -163,7 +165,7 @@ export default function LoginPage() {
               {/* EMAIL */}
               <div>
                 <label className="block mb-2 font-medium text-gray-700">
-                  Email
+                  {t("auth.login.emailLabel")}
                 </label>
 
                 <div className="relative">
@@ -171,14 +173,14 @@ export default function LoginPage() {
 
                   <input
                     type="text"
-                    placeholder="Email hoặc tên đăng nhập"
+                    placeholder={t("auth.login.emailPlaceholder")}
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className={`w-full h-12 border rounded-xl pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                       errors.email ? "border-red-400" : "border-gray-300"
                     }`}
-                    aria-label="Email or username"
+                    aria-label={t("auth.login.emailPlaceholder")}
                   />
                 </div>
 
@@ -191,7 +193,7 @@ export default function LoginPage() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="font-medium text-gray-700">
-                    Password
+                    {t("auth.login.passwordLabel")}
                   </label>
 
                   <button
@@ -199,7 +201,7 @@ export default function LoginPage() {
                     onClick={() => setShowModal(true)}
                     className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold"
                   >
-                    Forgot password?
+                    {t("auth.login.forgotPassword")}
                   </button>
                 </div>
 
@@ -208,7 +210,7 @@ export default function LoginPage() {
 
                   <input
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder={t("auth.login.passwordPlaceholder")}
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -229,17 +231,17 @@ export default function LoginPage() {
                 disabled={loading}
                 className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {loading ? "Logging in..." : "Log In"}
+                {loading ? t("auth.login.loading") : t("auth.login.submit")}
               </button>
 
               {/* SIGN UP */}
               <div className="pt-4 border-t text-center text-gray-600">
-                Don't have an account?{" "}
+                {t("auth.login.noAccount")}{" "}
                 <Link
                   to="/signup"
                   className="text-indigo-600 font-semibold hover:text-indigo-700"
                 >
-                  Sign up
+                  {t("auth.login.signupLink")}
                 </Link>
               </div>
             </form>
@@ -254,12 +256,11 @@ export default function LoginPage() {
             {!resetSent ? (
               <>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Reset your password
+                  {t("auth.login.resetTitle")}
                 </h2>
 
                 <p className="text-gray-600 mb-6">
-                  Enter your email address and
-                  we'll send you a reset link.
+                  {t("auth.login.resetDesc")}
                 </p>
 
                 <form
@@ -268,7 +269,7 @@ export default function LoginPage() {
                 >
                   <div>
                     <label className="block mb-2 font-medium text-gray-700">
-                      Email
+                      {t("auth.login.resetEmailLabel")}
                     </label>
 
                     <div className="relative">
@@ -291,7 +292,7 @@ export default function LoginPage() {
                     type="submit"
                     className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold"
                   >
-                    Send Reset Link
+                    {t("auth.login.sendResetLink")}
                   </button>
 
                   <button
@@ -299,7 +300,7 @@ export default function LoginPage() {
                     onClick={closeModal}
                     className="w-full h-12 border border-gray-300 rounded-xl hover:bg-gray-50"
                   >
-                    Cancel
+                    {t("auth.login.cancel")}
                   </button>
                 </form>
               </>
@@ -310,12 +311,11 @@ export default function LoginPage() {
                 </div>
 
                 <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                  Check your email
+                  {t("auth.login.checkEmail")}
                 </h2>
 
                 <p className="text-gray-600 mb-6">
-                  We've sent a password reset link
-                  to:
+                  {t("auth.login.resetSentTo")}
                   <br />
                   <strong>{resetEmail}</strong>
                 </p>
@@ -324,14 +324,14 @@ export default function LoginPage() {
                   onClick={closeModal}
                   className="w-full h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold"
                 >
-                  Got it
+                  {t("auth.login.gotIt")}
                 </button>
 
                 <button
                   onClick={() => setResetSent(false)}
                   className="mt-4 text-sm text-indigo-600 font-semibold"
                 >
-                  Resend email
+                  {t("auth.login.resend")}
                 </button>
               </div>
             )}
