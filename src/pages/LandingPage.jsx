@@ -13,24 +13,24 @@ export default function LandingPage() {
 
   return (
     <div className="overflow-hidden bg-white">
-      {/* LANGUAGE SWITCHER */}
-      <div className="absolute top-4 right-6 z-50 flex items-center gap-2">
-        <button
-          onClick={() => setLanguage("vi")}
-          className={`text-sm px-2 py-1 rounded ${language === "vi" ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}
-        >
-          VN
-        </button>
-        <button
-          onClick={() => setLanguage("en")}
-          className={`text-sm px-2 py-1 rounded ${language === "en" ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}
-        >
-          EN
-        </button>
-      </div>
-
       {/* HERO */}
-      <section className="container mx-auto px-6 py-20 md:py-32 bg-gradient-to-tr from-purple-200 via-white to-pink-200">
+      <section className="container mx-auto px-6 py-20 md:py-32 bg-gradient-to-tr from-purple-200 via-white to-pink-200 relative">
+        {/* LANGUAGE SWITCHER */}
+        <div className="absolute top-4 right-6 flex items-center gap-1 bg-white/80 backdrop-blur rounded-lg px-1 py-1 shadow-sm border">
+          <button
+            onClick={() => setLanguage("vi")}
+            className={`text-xs px-2 py-1 rounded ${language === "vi" ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}
+          >
+            VN
+          </button>
+          <button
+            onClick={() => setLanguage("en")}
+            className={`text-xs px-2 py-1 rounded ${language === "en" ? "bg-indigo-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}
+          >
+            EN
+          </button>
+        </div>
+
         <div className="max-w-5xl mx-auto text-center">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 mb-6">
