@@ -14,8 +14,10 @@ import StatsRow from "../components/dashboard/StatsRow";
 import RecentActivity from "../components/dashboard/RecentActivity";
 import RecommendedJobs from "../components/dashboard/RecommendedJobs";
 import { apiGet } from "../lib/api";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function DashBoardPage() {
+  const { t } = useLanguage();
   const [profile, setProfile] = useState(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [projects, setProjects] = useState([]);
@@ -130,12 +132,11 @@ export default function DashBoardPage() {
 
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                Welcome back, {profile?.fullName?.split(" ")[0] || "there"} 👋
+                {t("dashboard.welcome").replace("{name}", profile?.fullName?.split(" ")[0] || "there")} 👋
               </h1>
 
               <p className="text-gray-600 mt-1">
-                Here's what's happening with your
-                creative journey
+                {t("dashboard.subtitle")}
               </p>
             </div>
           </div>
@@ -150,7 +151,7 @@ export default function DashBoardPage() {
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-all"
             >
               <Pencil className="w-4 h-4" />
-              {showEditForm ? "Hide Edit Form" : "Edit Profile"}
+              {showEditForm ? t("dashboard.hideEditForm") : t("profile.editProfile")}
             </button>
           </div>
 
@@ -174,11 +175,11 @@ export default function DashBoardPage() {
 
                 <div>
                   <h3 className="font-semibold text-gray-900">
-                    Add Project
+                    {t("dashboard.addProject")}
                   </h3>
 
                   <p className="text-sm text-gray-500">
-                    Upload new work
+                    {t("dashboard.uploadNewWork")}
                   </p>
                 </div>
               </div>
@@ -194,11 +195,11 @@ export default function DashBoardPage() {
 
                 <div>
                   <h3 className="font-semibold text-gray-900">
-                    Browse Jobs
+                    {t("dashboard.browseJobs")}
                   </h3>
 
                   <p className="text-sm text-gray-500">
-                    Find opportunities
+                    {t("dashboard.findOpportunities")}
                   </p>
                 </div>
               </div>
@@ -214,11 +215,11 @@ export default function DashBoardPage() {
 
                 <div>
                   <h3 className="font-semibold text-gray-900">
-                    Get Feedback
+                    {t("dashboard.getFeedback")}
                   </h3>
 
                   <p className="text-sm text-gray-500">
-                    From buddys
+                    {t("dashboard.fromBuddies")}
                   </p>
                 </div>
               </div>
@@ -236,11 +237,11 @@ export default function DashBoardPage() {
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h2 className="text-xl font-bold">
-                  Your Projects
+                  {t("dashboard.yourProjects")}
                 </h2>
 
                 <p className="text-gray-500 text-sm">
-                  Recent uploads
+                  {t("dashboard.recentUploads")}
                 </p>
               </div>
 
@@ -248,7 +249,7 @@ export default function DashBoardPage() {
                 to="/portfolio-builder"
                 className="border px-4 py-2 rounded-lg text-sm hover:bg-gray-100 inline-flex items-center gap-1"
               >
-                View All
+                {t("common.viewAll")}
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>

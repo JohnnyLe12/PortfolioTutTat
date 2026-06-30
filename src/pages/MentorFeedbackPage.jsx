@@ -25,10 +25,12 @@ import FeedbackCommentThread from "../components/feedback/FeedbackCommentThread"
 import FeedbackStatusTag from "../components/feedback/FeedbackStatusTag";
 import ChatPanel from "../components/feedback/ChatPanel";
 import { apiGet } from "../lib/api";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function MentorFeedbackPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [feedbackRequest, setFeedbackRequest] = useState(null);
   const [feedbacks, setFeedbacks] = useState([]);
@@ -80,7 +82,7 @@ export default function MentorFeedbackPage() {
       <div className="p-8 max-w-5xl mx-auto flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-indigo-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading feedback...</p>
+          <p className="text-gray-600">{t("feedback.loadingFeedback")}</p>
         </div>
       </div>
     );
@@ -92,10 +94,10 @@ export default function MentorFeedbackPage() {
       <div className="p-8 max-w-5xl mx-auto">
         <div className="text-center py-12">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">{t("common.error")}</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <Button onClick={fetchData} variant="outline">
-            Try Again
+            {t("common.tryAgain")}
           </Button>
         </div>
       </div>
@@ -125,11 +127,11 @@ export default function MentorFeedbackPage() {
             className="inline-flex items-center text-indigo-600 hover:text-indigo-700 mb-4 font-medium"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Feedback Requests
+            {t("feedback.backToRequests")}
           </Link>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Portfolio Feedback</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">{t("feedback.portfolioFeedback")}</h1>
           <p className="text-gray-600 text-lg">
-            Your portfolio is currently being reviewed
+            {t("feedback.beingReviewed")}
           </p>
         </div>
 
@@ -142,7 +144,7 @@ export default function MentorFeedbackPage() {
                   {feedbackRequest.project?.title || "Untitled Project"}
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  Reviewer: {buddyUserId ? (
+                  {t("feedback.reviewer")}: {buddyUserId ? (
                     <Link to={`/buddy-profile/${buddyUserId}`} className="text-indigo-600 hover:underline font-medium">
                       {buddyName}
                     </Link>
@@ -169,7 +171,7 @@ export default function MentorFeedbackPage() {
             <CardContent className="p-8 text-center">
               <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-600">
-                Chat is not available. Missing conversation context.
+                {t("feedback.chatNotAvailable")}
               </p>
             </CardContent>
           </Card>
@@ -188,24 +190,24 @@ export default function MentorFeedbackPage() {
             className="inline-flex items-center text-indigo-600 hover:text-indigo-700 mb-4 font-medium"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Feedback Requests
+            {t("feedback.backToRequests")}
           </Link>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Portfolio Feedback</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">{t("feedback.portfolioFeedback")}</h1>
         </div>
 
         <Card className="border-2">
           <CardContent className="p-8 text-center">
             <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Feedback Not Yet Available
+              {t("feedback.notYetAvailable")}
             </h2>
             <p className="text-gray-600 mb-4">
-              This feedback request is currently{" "}
+              {t("feedback.notYetAvailableDescription")}{" "}
               <FeedbackStatusTag status={feedbackRequest.status} />.
-              Feedback content will be available once the review is completed.
+              {" "}{t("feedback.availableWhenCompleted")}
             </p>
             <p className="text-sm text-gray-500">
-              Project: {feedbackRequest.project?.title || "—"}
+              {t("feedback.project")}: {feedbackRequest.project?.title || "—"}
             </p>
           </CardContent>
         </Card>
@@ -233,11 +235,11 @@ export default function MentorFeedbackPage() {
           className="inline-flex items-center text-indigo-600 hover:text-indigo-700 mb-4 font-medium"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Feedback Requests
+          {t("feedback.backToRequests")}
         </Link>
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Portfolio Feedback</h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">{t("feedback.portfolioFeedback")}</h1>
         <p className="text-gray-600 text-lg">
-          Expert reviews and suggestions for your work
+          {t("feedback.expertReviews")}
         </p>
       </div>
 
@@ -255,19 +257,19 @@ export default function MentorFeedbackPage() {
                   size={20}
                 />
               </div>
-              <div className="text-sm text-gray-600 font-medium">Average Rating</div>
+              <div className="text-sm text-gray-600 font-medium">{t("feedback.averageRating")}</div>
             </div>
             <div className="text-center">
               <div className="text-5xl font-bold text-indigo-600 mb-2">
                 {feedbacks.length}
               </div>
-              <div className="text-sm text-gray-600 font-medium">Buddy Reviews</div>
+              <div className="text-sm text-gray-600 font-medium">{t("feedback.buddyReviews")}</div>
             </div>
             <div className="text-center">
               <div className="text-5xl font-bold text-indigo-600 mb-2">
                 {summary?.helpfulCount || 0}
               </div>
-              <div className="text-sm text-gray-600 font-medium">Helpful Votes</div>
+              <div className="text-sm text-gray-600 font-medium">{t("feedback.helpfulVotes")}</div>
             </div>
           </div>
         </CardContent>
@@ -277,14 +279,14 @@ export default function MentorFeedbackPage() {
         {/* Feedback Comments */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Buddy Comments</h2>
-            <Badge className="px-3 py-1">{feedbacks.length} reviews</Badge>
+            <h2 className="text-2xl font-bold text-gray-900">{t("feedback.buddyComments")}</h2>
+            <Badge className="px-3 py-1">{feedbacks.length} {t("feedback.reviews")}</Badge>
           </div>
 
           {feedbacks.length === 0 ? (
             <Card className="border-2">
               <CardContent className="p-6 text-center text-gray-500">
-                No feedback has been submitted yet.
+                {t("feedback.noFeedbackYet")}
               </CardContent>
             </Card>
           ) : (
@@ -347,7 +349,7 @@ export default function MentorFeedbackPage() {
                     {feedback.suggestions && feedback.suggestions.length > 0 && (
                       <div className="mb-4 p-3 bg-indigo-50 rounded-lg">
                         <p className="text-sm font-medium text-indigo-800 mb-2">
-                          Suggestions:
+                          {t("feedback.suggestions")}:
                         </p>
                         <ul className="space-y-1">
                           {feedback.suggestions.map((suggestion, i) => (
@@ -389,16 +391,16 @@ export default function MentorFeedbackPage() {
                 <MessageSquare className="h-7 w-7 text-indigo-600" />
               </div>
               <h3 className="font-bold text-lg text-gray-900 mb-2">
-                Want More Feedback?
+                {t("feedback.wantMore")}
               </h3>
               <p className="text-gray-600 mb-4">
-                Request additional reviews from other buddies in the community
+                {t("feedback.requestAdditional")}
               </p>
               <Button
                 onClick={handleRequestMoreReviews}
                 className="bg-indigo-600 hover:bg-indigo-700 font-semibold"
               >
-                Request More Reviews
+                {t("feedback.requestMoreReviews")}
               </Button>
             </CardContent>
           </Card>
@@ -410,9 +412,9 @@ export default function MentorFeedbackPage() {
           {feedbacks.some((f) => f.suggestions?.length > 0) && (
             <Card className="border-2">
               <CardHeader>
-                <CardTitle>Key Suggestions</CardTitle>
+                <CardTitle>{t("feedback.keySuggestions")}</CardTitle>
                 <CardDescription>
-                  Common recommendations from buddies
+                  {t("feedback.commonRecommendations")}
                 </CardDescription>
               </CardHeader>
               <CardContent>

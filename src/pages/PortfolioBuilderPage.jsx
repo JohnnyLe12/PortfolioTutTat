@@ -24,9 +24,11 @@ import {
 
 import MediaUploader from "../components/project/MediaUploader";
 import { apiPost, apiGet } from "../lib/api";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function PortfolioBuilderPage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   // Form state
   const [title, setTitle] = useState("");
@@ -138,11 +140,11 @@ export default function PortfolioBuilderPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          Portfolio Builder
+          {t("portfolio.builder.title")}
         </h1>
 
         <p className="text-gray-600 text-lg">
-          Create and manage your creative portfolio
+          {t("portfolio.builder.subtitle")}
         </p>
       </div>
 
@@ -152,10 +154,10 @@ export default function PortfolioBuilderPage() {
           {/* Upload Project Card */}
           <Card className="border-2">
             <CardHeader>
-              <CardTitle className="text-2xl">Upload New Project</CardTitle>
+              <CardTitle className="text-2xl">{t("portfolio.builder.uploadProject")}</CardTitle>
 
               <CardDescription>
-                Showcase your best work to potential employers
+                {t("portfolio.builder.showcaseWork")}
               </CardDescription>
             </CardHeader>
 
@@ -177,7 +179,7 @@ export default function PortfolioBuilderPage() {
                 {/* Title */}
                 <div>
                   <Label htmlFor="title" className="text-base">
-                    Project Title <span className="text-red-500">*</span>
+                    {t("portfolio.builder.projectTitle")} <span className="text-red-500">*</span>
                   </Label>
 
                   <Input
@@ -203,7 +205,7 @@ export default function PortfolioBuilderPage() {
                 {/* Description */}
                 <div>
                   <Label htmlFor="description" className="text-base">
-                    Description
+                    {t("portfolio.builder.description")}
                   </Label>
 
                   <Textarea
@@ -218,7 +220,7 @@ export default function PortfolioBuilderPage() {
                 {/* Tags */}
                 <div>
                   <Label htmlFor="tags" className="text-base">
-                    Tags
+                    {t("portfolio.builder.tags")}
                   </Label>
 
                   <Input
@@ -230,7 +232,7 @@ export default function PortfolioBuilderPage() {
                   />
 
                   <p className="text-sm text-gray-500 mt-2">
-                    Separate tags with commas
+                    {t("portfolio.builder.separateTags")}
                   </p>
                 </div>
 
@@ -248,7 +250,7 @@ export default function PortfolioBuilderPage() {
                     type="button"
                   >
                     <Eye className="h-4 w-4 mr-2" />
-                    Preview
+                    {t("portfolio.builder.preview")}
                   </Button>
 
                   <Button
@@ -260,12 +262,12 @@ export default function PortfolioBuilderPage() {
                     {isSaving ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Saving...
+                        {t("portfolio.builder.saving")}
                       </>
                     ) : (
                       <>
                         <Save className="h-4 w-4 mr-2" />
-                        Save Project
+                        {t("portfolio.builder.saveProject")}
                       </>
                     )}
                   </Button>
@@ -280,18 +282,17 @@ export default function PortfolioBuilderPage() {
           {/* Existing Projects */}
           <Card className="border-2">
             <CardHeader>
-              <CardTitle>Your Projects</CardTitle>
+              <CardTitle>{t("dashboard.yourProjects")}</CardTitle>
 
               <CardDescription>
-                {existingProjects.length} project
-                {existingProjects.length !== 1 ? "s" : ""}
+                {existingProjects.length} {t("portfolio.builder.projectCount")}
               </CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-3">
               {existingProjects.length === 0 && (
                 <p className="text-sm text-gray-500">
-                  No projects yet. Create your first one!
+                  {t("portfolio.builder.noProjects")}
                 </p>
               )}
 
@@ -347,28 +348,28 @@ export default function PortfolioBuilderPage() {
           <Card className="border-2 bg-gradient-to-br from-indigo-50 to-purple-50">
             <CardContent className="p-6">
               <h3 className="font-semibold text-gray-900 mb-2">
-                💡 Portfolio Tips
+                💡 {t("portfolio.builder.tips.title")}
               </h3>
 
               <ul className="space-y-2 text-sm text-gray-700">
                 <li className="flex items-start gap-2">
                   <span className="text-indigo-600 font-bold">•</span>
-                  <span>Use high-quality images</span>
+                  <span>{t("portfolio.builder.tips.highQuality")}</span>
                 </li>
 
                 <li className="flex items-start gap-2">
                   <span className="text-indigo-600 font-bold">•</span>
-                  <span>Write detailed case studies</span>
+                  <span>{t("portfolio.builder.tips.caseStudies")}</span>
                 </li>
 
                 <li className="flex items-start gap-2">
                   <span className="text-indigo-600 font-bold">•</span>
-                  <span>Show your design process</span>
+                  <span>{t("portfolio.builder.tips.designProcess")}</span>
                 </li>
 
                 <li className="flex items-start gap-2">
                   <span className="text-indigo-600 font-bold">•</span>
-                  <span>Include project outcomes</span>
+                  <span>{t("portfolio.builder.tips.outcomes")}</span>
                 </li>
               </ul>
             </CardContent>

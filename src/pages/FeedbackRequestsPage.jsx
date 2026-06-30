@@ -4,20 +4,22 @@ import { MessageSquare, Loader2 } from "lucide-react";
 
 import { apiGet } from "../lib/api";
 import FeedbackRequestCard from "../components/feedback/FeedbackRequestCard";
-
-const FILTER_TABS = [
-  { key: "all", label: "All" },
-  { key: "pending", label: "Pending" },
-  { key: "in_review", label: "In Review" },
-  { key: "completed", label: "Completed" },
-];
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function FeedbackRequestsPage() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [feedbackRequests, setFeedbackRequests] = useState([]);
   const [activeFilter, setActiveFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const FILTER_TABS = [
+    { key: "all", label: t("feedback.all") },
+    { key: "pending", label: t("feedback.pending") },
+    { key: "in_review", label: t("feedback.inReview") },
+    { key: "completed", label: t("feedback.completed") },
+  ];
 
   useEffect(() => {
     fetchFeedbackRequests();
@@ -53,10 +55,10 @@ export default function FeedbackRequestsPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Feedback Requests
+            {t("feedback.title")}
           </h1>
           <p className="text-sm text-gray-600">
-            Track your portfolio review requests and feedback status
+            {t("feedback.trackRequests")}
           </p>
         </div>
       </div>
@@ -82,7 +84,7 @@ export default function FeedbackRequestsPage() {
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
-          <span className="ml-2 text-gray-600">Loading...</span>
+          <span className="ml-2 text-gray-600">{t("common.loading")}</span>
         </div>
       ) : error ? (
         <div className="text-center py-20">
@@ -91,19 +93,19 @@ export default function FeedbackRequestsPage() {
             onClick={fetchFeedbackRequests}
             className="text-indigo-600 hover:underline font-medium"
           >
-            Try again
+            {t("common.tryAgain")}
           </button>
         </div>
       ) : feedbackRequests.length === 0 ? (
         <div className="text-center py-20">
           <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-700 mb-2">
-            No feedback requests found
+            {t("feedback.noRequests")}
           </h3>
           <p className="text-gray-500">
             {activeFilter === "all"
-              ? "You haven't sent any feedback requests yet. Go to a project and request feedback from a buddy!"
-              : `No ${activeFilter.replace("_", " ")} feedback requests.`}
+              ? t("feedback.noRequestsDescription")
+              : t("feedback.noFilteredRequests").replace("{status}", activeFilter.replace("_", " "))}
           </p>
         </div>
       ) : (

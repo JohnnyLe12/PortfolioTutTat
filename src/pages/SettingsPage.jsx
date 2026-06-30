@@ -68,11 +68,11 @@ export default function SettingsPage() {
         <CardContent className="p-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
             <Lock className="w-5 h-5" />
-            Đổi mật khẩu
+            {t("settings.changePassword")}
           </h2>
           {passwordSuccess ? (
             <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm mb-4">
-              Mật khẩu đã được thay đổi thành công!
+              {t("settings.passwordChanged")}
             </div>
           ) : null}
           {passwordError && (
@@ -84,8 +84,8 @@ export default function SettingsPage() {
             e.preventDefault();
             setPasswordError("");
             setPasswordSuccess(false);
-            if (newPassword.length < 8) { setPasswordError("Mật khẩu mới phải có ít nhất 8 ký tự"); return; }
-            if (newPassword !== confirmNewPassword) { setPasswordError("Mật khẩu xác nhận không khớp"); return; }
+            if (newPassword.length < 8) { setPasswordError(t("settings.passwordMinLength")); return; }
+            if (newPassword !== confirmNewPassword) { setPasswordError(t("settings.passwordMismatch")); return; }
             setPasswordChanging(true);
             try {
               await apiPost("/auth/change-password", { currentPassword, newPassword });
@@ -94,25 +94,25 @@ export default function SettingsPage() {
               setNewPassword("");
               setConfirmNewPassword("");
             } catch (err) {
-              setPasswordError(err.message || "Không thể đổi mật khẩu");
+              setPasswordError(err.message || t("settings.passwordChangeFailed"));
             } finally {
               setPasswordChanging(false);
             }
           }} className="space-y-4">
             <div>
-              <Label>Mật khẩu hiện tại</Label>
+              <Label>{t("settings.currentPassword")}</Label>
               <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required className="mt-1" />
             </div>
             <div>
-              <Label>Mật khẩu mới (tối thiểu 8 ký tự)</Label>
+              <Label>{t("settings.newPassword")}</Label>
               <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="mt-1" />
             </div>
             <div>
-              <Label>Xác nhận mật khẩu mới</Label>
+              <Label>{t("settings.confirmNewPassword")}</Label>
               <Input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} required className="mt-1" />
             </div>
             <Button type="submit" disabled={passwordChanging} className="bg-indigo-600 hover:bg-indigo-700">
-              {passwordChanging ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Đang xử lý...</> : "Đổi mật khẩu"}
+              {passwordChanging ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {t("settings.processing")}</> : t("settings.changePassword")}
             </Button>
           </form>
         </CardContent>
@@ -174,17 +174,17 @@ export default function SettingsPage() {
               {t("settings.deleteConfirm")}
             </DialogTitle>
             <DialogDescription>
-              This action is irreversible. All your data will be permanently deleted including:
+              {t("settings.deleteIrreversible")}
             </DialogDescription>
           </DialogHeader>
 
           <ul className="text-sm text-gray-600 list-disc pl-5 space-y-1 my-2">
-            <li>Your profile and account information</li>
-            <li>All portfolios and media files</li>
-            <li>Feedback requests and reviews</li>
-            <li>Messages and conversations</li>
-            <li>Job postings (if company account)</li>
-            <li>Applications and bookmarks</li>
+            <li>{t("settings.deleteItem.profile")}</li>
+            <li>{t("settings.deleteItem.portfolios")}</li>
+            <li>{t("settings.deleteItem.feedback")}</li>
+            <li>{t("settings.deleteItem.messages")}</li>
+            <li>{t("settings.deleteItem.jobs")}</li>
+            <li>{t("settings.deleteItem.applications")}</li>
           </ul>
 
           <div className="mt-4">
@@ -217,7 +217,7 @@ export default function SettingsPage() {
               {deleting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Deleting...
+                  {t("settings.deleting")}
                 </>
               ) : (
                 <>

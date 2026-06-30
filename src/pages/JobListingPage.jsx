@@ -3,8 +3,10 @@ import { Loader2 } from "lucide-react";
 import { apiGet } from "../lib/api";
 import JobFilters from "../components/job/JobFilters";
 import JobCard from "../components/job/JobCard";
+import { useLanguage } from "../contexts/LanguageContext";
 
 export default function JobListingPage() {
+  const { t } = useLanguage();
   const [activeType, setActiveType] = useState("all");
   const [keyword, setKeyword] = useState("");
   const [location, setLocation] = useState("");
@@ -62,10 +64,10 @@ export default function JobListingPage() {
     <div className="p-8 max-w-6xl mx-auto">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          Find Your Dream Job
+          {t("jobs.browse.title")}
         </h1>
         <p className="text-gray-600 text-lg">
-          Discover internships and entry-level positions for creative talents
+          {t("jobs.browse.subtitle")}
         </p>
       </div>
 
@@ -82,11 +84,11 @@ export default function JobListingPage() {
       {/* Results Count */}
       <div className="mb-6">
         <p className="text-gray-600">
-          Showing{" "}
+          {t("jobs.browse.showing")}{" "}
           <span className="font-semibold text-gray-900">
-            {total} {total === 1 ? "job" : "jobs"}
+            {total} {total === 1 ? t("jobs.browse.job") : t("jobs.browse.jobs")}
           </span>{" "}
-          matching your criteria
+          {t("jobs.browse.matchingCriteria")}
         </p>
       </div>
 
@@ -94,7 +96,7 @@ export default function JobListingPage() {
       {loading && (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-          <span className="ml-3 text-gray-600">Loading jobs...</span>
+          <span className="ml-3 text-gray-600">{t("jobs.browse.loading")}</span>
         </div>
       )}
 
@@ -106,7 +108,7 @@ export default function JobListingPage() {
             onClick={fetchJobs}
             className="text-indigo-600 hover:text-indigo-800 font-medium"
           >
-            Try again
+            {t("common.tryAgain")}
           </button>
         </div>
       )}
@@ -115,7 +117,7 @@ export default function JobListingPage() {
       {!loading && !error && jobs.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500 text-lg">
-            No jobs found matching your criteria. Try adjusting your filters.
+            {t("jobs.browse.noJobs")}
           </p>
         </div>
       )}
