@@ -41,7 +41,7 @@ export default function LoginPage() {
       } else if (role === 'company') {
         navigate("/company-dashboard");
       } else if (role === 'admin') {
-        navigate("/dashboard");
+        navigate("/admin-dashboard");
       } else {
         navigate("/dashboard");
       }

@@ -34,6 +34,7 @@ import BuddyProfilePage from "../pages/BuddyProfilePage";
 import MenteeProfilePage from "../pages/MenteeProfilePage";
 import CompanyProfilePage from "../pages/CompanyProfilePage";
 import SettingsPage from "../pages/SettingsPage";
+import AdminDashboardPage from "../pages/AdminDashboardPage";
 import NotFoundPage from "../pages/NotFoundPage";
 
 export default function AppRoutes() {
@@ -98,6 +99,11 @@ export default function AppRoutes() {
           <Route path="company-dashboard" element={<CompanyDashboardPage />} />
           <Route path="job-creation" element={<JobCreationPage />} />
           <Route path="applicants-tracker" element={<ApplicantsTrackerPage />} />
+        </Route>
+
+        {/* Admin-only routes */}
+        <Route element={<RoleProtectedRoute allowedRoles={["admin"]} />}>
+          <Route path="admin-dashboard" element={<AdminDashboardPage />} />
         </Route>
 
         {/* Mentee-only routes (mentee + admin) */}

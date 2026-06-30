@@ -54,7 +54,8 @@ export default function RootLayout() {
     location.pathname.startsWith("/job-creation") ||
     location.pathname.startsWith("/applicants-tracker") ||
     location.pathname.startsWith("/settings") ||
-    location.pathname.startsWith("/buddy-profile");
+    location.pathname.startsWith("/buddy-profile") ||
+    location.pathname.startsWith("/admin-dashboard") ||
     location.pathname.startsWith("/advanced-job-search");
 
   // Get current user role from localStorage
@@ -137,6 +138,7 @@ export default function RootLayout() {
                     const u = stored ? JSON.parse(stored) : null;
                     if (u?.role === 'buddy') return '/buddy-dashboard';
                     if (u?.role === 'company') return '/company-dashboard';
+                    if (u?.role === 'admin') return '/admin-dashboard';
                     return '/dashboard';
                   } catch { return '/dashboard'; }
                 })()}>
@@ -390,93 +392,43 @@ function CompanySidebar({ pathname, t }) {
   );
 }
 
-/* ADMIN SIDEBAR — shows all navigation items */
+/* ADMIN SIDEBAR — admin management navigation */
 function AdminSidebar({ pathname, feedbackUnreadCount, t }) {
   return (
     <>
       <SidebarLink
-        to="/dashboard"
+        to="/admin-dashboard"
         icon={<LayoutDashboard />}
-        text={t("nav.dashboard")}
-        active={pathname === "/dashboard"}
+        text="Dashboard"
+        active={pathname === "/admin-dashboard"}
       />
 
-      <SidebarLink
-        to="/buddy-dashboard"
-        icon={<LayoutDashboard />}
-        text="Buddy Dashboard"
-        active={pathname === "/buddy-dashboard"}
-      />
+      <div className="pt-3 mt-3 border-t">
+        <p className="px-4 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+          Manage
+        </p>
 
-      <SidebarLink
-        to="/company-dashboard"
-        icon={<LayoutDashboard />}
-        text="Company Dashboard"
-        active={pathname === "/company-dashboard"}
-      />
+        <SidebarLink
+          to="/admin-dashboard"
+          icon={<Users />}
+          text="Accounts"
+          active={false}
+        />
 
-      <SidebarLink
-        to="/portfolio-builder"
-        icon={<Folder />}
-        text={t("nav.portfolio")}
-        active={pathname.startsWith("/portfolio")}
-      />
+        <SidebarLink
+          to="/admin-dashboard"
+          icon={<Folder />}
+          text="Portfolios"
+          active={false}
+        />
 
-      <SidebarLink
-        to="/browse-portfolios"
-        icon={<BookOpen />}
-        text={t("nav.browsePortfolios")}
-        active={pathname === "/browse-portfolios"}
-      />
-
-      <SidebarLink
-        to="/feedback-workspace"
-        icon={<MessageSquare />}
-        text={t("nav.feedbackWorkspace")}
-        active={pathname === "/feedback-workspace"}
-      />
-
-      <SidebarLink
-        to="/feedback-requests"
-        icon={<MessageSquare />}
-        text={t("nav.feedback")}
-        active={pathname.startsWith("/feedback-requests")}
-      />
-
-      <SidebarLink
-        to="/jobs"
-        icon={<Briefcase />}
-        text={t("nav.jobs")}
-        active={pathname === "/jobs" || pathname.startsWith("/jobs/")}
-      />
-
-      <SidebarLink
-        to="/job-creation"
-        icon={<PlusCircle />}
-        text="Create Job"
-        active={pathname === "/job-creation"}
-      />
-
-      <SidebarLink
-        to="/applicants-tracker"
-        icon={<Users />}
-        text="Applicants"
-        active={pathname === "/applicants-tracker"}
-      />
-
-      <SidebarLink
-        to="/advanced-job-search"
-        icon={<Search />}
-        text="Advanced Search"
-        active={pathname === "/advanced-job-search"}
-      />
-
-      <SidebarLink
-        to="/applications"
-        icon={<ClipboardList />}
-        text={t("nav.applications")}
-        active={pathname === "/applications"}
-      />
+        <SidebarLink
+          to="/admin-dashboard"
+          icon={<Briefcase />}
+          text="Jobs"
+          active={false}
+        />
+      </div>
     </>
   );
 }
