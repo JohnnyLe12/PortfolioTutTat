@@ -400,7 +400,7 @@ function AdminSidebar({ pathname, feedbackUnreadCount, t }) {
         to="/admin-dashboard"
         icon={<LayoutDashboard />}
         text="Dashboard"
-        active={pathname === "/admin-dashboard"}
+        active={pathname === "/admin-dashboard" && !window.location.search}
       />
 
       <div className="pt-3 mt-3 border-t">
@@ -409,24 +409,24 @@ function AdminSidebar({ pathname, feedbackUnreadCount, t }) {
         </p>
 
         <SidebarLink
-          to="/admin-dashboard"
+          to="/admin-dashboard?tab=accounts"
           icon={<Users />}
           text="Accounts"
-          active={false}
+          active={window.location.search.includes('tab=accounts')}
         />
 
         <SidebarLink
-          to="/admin-dashboard"
+          to="/admin-dashboard?tab=portfolios"
           icon={<Folder />}
           text="Portfolios"
-          active={false}
+          active={window.location.search.includes('tab=portfolios')}
         />
 
         <SidebarLink
-          to="/admin-dashboard"
+          to="/admin-dashboard?tab=jobs"
           icon={<Briefcase />}
           text="Jobs"
-          active={false}
+          active={window.location.search.includes('tab=jobs')}
         />
       </div>
     </>

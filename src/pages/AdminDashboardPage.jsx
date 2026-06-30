@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { apiGet, apiPost, apiPatch, apiDelete } from "../lib/api";
 import {
   Users,
@@ -22,7 +23,13 @@ const TABS = [
 ];
 
 export default function AdminDashboardPage() {
-  const [activeTab, setActiveTab] = useState("accounts");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const activeTab = searchParams.get("tab") || "accounts";
+
+  function setActiveTab(tab) {
+    setSearchParams({ tab });
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -195,7 +202,18 @@ function AccountsTab() {
                     <td className="px-4 py-3 text-gray-500">
                       {new Date(u.createdAt).toLocaleDateString()}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 text-right flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => {
+                          if (u.role === 'mentee') window.location.href = `/profile/${u.id}`;
+                          else if (u.role === 'buddy') window.location.href = `/buddy-profile/${u.id}`;
+                          else if (u.role === 'company') window.location.href = `/company-profile/${u.id}`;
+                        }}
+                        className="text-indigo-600 hover:text-indigo-700 p-1"
+                        title="View profile"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
                       {u.role !== "admin" && (
                         <button
                           onClick={() => setDeleteTarget(u)}
@@ -468,6 +486,13 @@ function PortfoliosTab() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex gap-1 justify-end">
+                        <a
+                          href={`/portfolio/${p.id}`}
+                          className="text-indigo-600 hover:text-indigo-700 p-1"
+                          title="View portfolio"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </a>
                         {p.status === "public" ? (
                           <button
                             onClick={() => handleTakeDown(p.id)}
@@ -644,6 +669,13 @@ function JobsTab() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex gap-1 justify-end">
+                        <a
+                          href={`/jobs/${j.id}`}
+                          className="text-indigo-600 hover:text-indigo-700 p-1"
+                          title="View job"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </a>
                         <button
                           onClick={() => handleToggleActive(j.id, j.isActive)}
                           className={`p-1 ${j.isActive ? "text-amber-600 hover:text-amber-700" : "text-green-600 hover:text-green-700"}`}
