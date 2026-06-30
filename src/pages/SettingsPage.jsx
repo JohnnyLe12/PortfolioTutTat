@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Settings, Trash2, AlertTriangle, Loader2, Globe } from "lucide-react";
+import { Settings, Trash2, AlertTriangle, Loader2, Globe, Lock } from "lucide-react";
 
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
@@ -14,7 +14,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "../components/ui/dialog";
-import { apiDelete, clearTokens } from "../lib/api";
+import { apiDelete, apiPost, clearTokens } from "../lib/api";
 import { useLanguage } from "../contexts/LanguageContext";
 
 export default function SettingsPage() {
@@ -24,6 +24,14 @@ export default function SettingsPage() {
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
+
+  // Change password state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [passwordChanging, setPasswordChanging] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   async function handleDeleteAccount() {
     if (confirmText !== "DELETE") return;
@@ -54,6 +62,61 @@ export default function SettingsPage() {
           <p className="text-sm text-gray-600">{t("settings.subtitle")}</p>
         </div>
       </div>
+
+      {/* Change Password */}
+      <Card className="border-2 mb-6">
+        <CardContent className="p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Lock className="w-5 h-5" />
+            Đổi mật khẩu
+          </h2>
+          {passwordSuccess ? (
+            <div className="p-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm mb-4">
+              Mật khẩu đã được thay đổi thành công!
+            </div>
+          ) : null}
+          {passwordError && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm mb-4">
+              {passwordError}
+            </div>
+          )}
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            setPasswordError("");
+            setPasswordSuccess(false);
+            if (newPassword.length < 8) { setPasswordError("Mật khẩu mới phải có ít nhất 8 ký tự"); return; }
+            if (newPassword !== confirmNewPassword) { setPasswordError("Mật khẩu xác nhận không khớp"); return; }
+            setPasswordChanging(true);
+            try {
+              await apiPost("/auth/change-password", { currentPassword, newPassword });
+              setPasswordSuccess(true);
+              setCurrentPassword("");
+              setNewPassword("");
+              setConfirmNewPassword("");
+            } catch (err) {
+              setPasswordError(err.message || "Không thể đổi mật khẩu");
+            } finally {
+              setPasswordChanging(false);
+            }
+          }} className="space-y-4">
+            <div>
+              <Label>Mật khẩu hiện tại</Label>
+              <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required className="mt-1" />
+            </div>
+            <div>
+              <Label>Mật khẩu mới (tối thiểu 8 ký tự)</Label>
+              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required className="mt-1" />
+            </div>
+            <div>
+              <Label>Xác nhận mật khẩu mới</Label>
+              <Input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} required className="mt-1" />
+            </div>
+            <Button type="submit" disabled={passwordChanging} className="bg-indigo-600 hover:bg-indigo-700">
+              {passwordChanging ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Đang xử lý...</> : "Đổi mật khẩu"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {/* Language Switcher */}
       <Card className="border-2 mb-6">
