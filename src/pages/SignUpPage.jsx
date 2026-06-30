@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Mail, Lock, Users, Briefcase, Building2, ShieldCheck, ArrowLeft } from "lucide-react";
+import { Mail, Lock, Users, Briefcase, Building2, ArrowLeft } from "lucide-react";
 import { apiPost, setTokens, ApiError } from "../lib/api.js";
 
 const ROLES = [
@@ -22,12 +22,6 @@ const ROLES = [
     description: "Post jobs and find talent",
     icon: Building2,
   },
-  {
-    value: "admin",
-    label: "Admin",
-    description: "Manage the platform",
-    icon: ShieldCheck,
-  },
 ];
 
 export default function SignUpPage() {
@@ -37,7 +31,6 @@ export default function SignUpPage() {
   const [selectedRole, setSelectedRole] = useState(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [inviteCode, setInviteCode] = useState("");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -76,9 +69,6 @@ export default function SignUpPage() {
 
     try {
       const payload = { email, password, role: selectedRole };
-      if (selectedRole === "admin" && inviteCode) {
-        payload.inviteCode = inviteCode;
-      }
 
       const result = await apiPost("/auth/register", payload);
       const data = result.data || result;
@@ -357,26 +347,6 @@ export default function SignUpPage() {
                     </p>
                   )}
                 </div>
-
-                {/* ADMIN INVITE CODE */}
-                {selectedRole === "admin" && (
-                  <div>
-                    <label className="block mb-2 font-medium text-gray-700">
-                      Admin Invite Code
-                    </label>
-                    <div className="relative">
-                      <ShieldCheck className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                      <input
-                        type="text"
-                        placeholder="Enter invite code"
-                        required
-                        value={inviteCode}
-                        onChange={(e) => setInviteCode(e.target.value)}
-                        className="w-full h-12 border border-gray-300 rounded-xl pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      />
-                    </div>
-                  </div>
-                )}
 
                 {/* SUBMIT BUTTON */}
                 <button
