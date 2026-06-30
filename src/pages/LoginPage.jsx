@@ -178,6 +178,7 @@ export default function LoginPage() {
                     className={`w-full h-12 border rounded-xl pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                       errors.email ? "border-red-400" : "border-gray-300"
                     }`}
+                    aria-label="Email or username"
                   />
                 </div>
 
