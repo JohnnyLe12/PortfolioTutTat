@@ -30,6 +30,20 @@ export async function GET(
                 avatarUrl: true,
               },
             },
+            companyProfile: {
+              select: {
+                companyName: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            applications: {
+              where: {
+                status: { in: ['submitted', 'under_review', 'accepted'] },
+              },
+            },
           },
         },
       },
@@ -55,6 +69,13 @@ export async function GET(
       isBookmarked = !!bookmark
     }
 
+    // Calculate remaining slots
+    const activeApplicationCount = job._count.applications
+    const remainingSlots = job.openSlots !== null
+      ? Math.max(0, job.openSlots - activeApplicationCount)
+      : null
+    const isFull = remainingSlots !== null ? remainingSlots <= 0 : false
+
     const jobDetail = {
       id: job.id,
       title: job.title,
@@ -69,12 +90,16 @@ export async function GET(
       salaryMax: job.salaryMax,
       salaryCurrency: job.salaryCurrency,
       experienceLevel: job.experienceLevel,
+      openSlots: job.openSlots,
+      remainingSlots,
+      isFull,
       createdAt: job.createdAt,
       updatedAt: job.updatedAt,
       isBookmarked,
       company: {
         id: job.company.id,
-        name: job.company.profile?.fullName ?? job.company.email,
+        userId: job.company.id,
+        name: job.company.companyProfile?.companyName ?? job.company.profile?.fullName ?? job.company.email,
         logoUrl: job.company.profile?.avatarUrl ?? null,
       },
     }

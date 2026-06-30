@@ -138,15 +138,33 @@ export default function JobCard({ job }) {
               </div>
             </div>
 
-            {job.requiredSkills?.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {job.requiredSkills.map((skill, i) => (
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Slot status badge */}
+              {job.openSlots !== null && job.openSlots !== undefined && (
+                <>
+                  {job.isFull ? (
+                    <Badge className="bg-red-100 text-red-700 border-red-200">
+                      Full
+                    </Badge>
+                  ) : job.remainingSlots === 1 ? (
+                    <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">
+                      1 slot remaining
+                    </Badge>
+                  ) : job.remainingSlots !== null && (
+                    <Badge className="bg-green-100 text-green-700 border-green-200">
+                      {job.remainingSlots} slots remaining
+                    </Badge>
+                  )}
+                </>
+              )}
+
+              {job.requiredSkills?.length > 0 &&
+                job.requiredSkills.map((skill, i) => (
                   <Badge key={i} variant="secondary">
                     {skill}
                   </Badge>
                 ))}
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </CardContent>

@@ -32,6 +32,7 @@ import ApplicantsTrackerPage from "../pages/ApplicantsTrackerPage";
 import AdvancedJobSearchPage from "../pages/AdvancedJobSearchPage";
 import BuddyProfilePage from "../pages/BuddyProfilePage";
 import MenteeProfilePage from "../pages/MenteeProfilePage";
+import CompanyProfilePage from "../pages/CompanyProfilePage";
 import SettingsPage from "../pages/SettingsPage";
 import NotFoundPage from "../pages/NotFoundPage";
 
@@ -72,6 +73,9 @@ export default function AppRoutes() {
 
           {/* Buddy Profile (viewable by any authenticated user) */}
           <Route path="buddy-profile/:userId" element={<BuddyProfilePage />} />
+
+          {/* Company Profile (viewable by any authenticated user) */}
+          <Route path="company-profile/:userId" element={<CompanyProfilePage />} />
 
           {/* Mentee Profile (viewable by any authenticated user) */}
           <Route path="profile/:id" element={<MenteeProfilePage />} />

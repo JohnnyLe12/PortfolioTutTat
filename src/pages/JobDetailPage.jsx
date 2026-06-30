@@ -157,7 +157,12 @@ export default function JobDetailPage() {
                     </h1>
 
                     <div className="text-2xl text-gray-600 mb-4 font-medium">
-                      {job.company?.name || "Company"}
+                      <Link
+                        to={`/company-profile/${job.company?.userId || job.company?.id}`}
+                        className="hover:text-indigo-600 transition-colors"
+                      >
+                        {job.company?.name || "Company"}
+                      </Link>
                     </div>
 
                     <div className="flex flex-wrap gap-4 text-base text-gray-600">
@@ -264,6 +269,22 @@ export default function JobDetailPage() {
               <Card>
                 <CardContent className="p-6 space-y-4">
                   <h3 className="font-bold">Job Details</h3>
+
+                  {/* Slot status */}
+                  {job.openSlots !== null && job.openSlots !== undefined && (
+                    <div>
+                      <p className="text-sm text-gray-500">Open Slots</p>
+                      {job.isFull ? (
+                        <p className="font-medium text-red-600">Full</p>
+                      ) : job.remainingSlots === 1 ? (
+                        <p className="font-medium text-yellow-600">1 slot remaining</p>
+                      ) : job.remainingSlots !== null ? (
+                        <p className="font-medium text-green-600">{job.remainingSlots} slots remaining</p>
+                      ) : (
+                        <p className="font-medium">{job.openSlots} slots</p>
+                      )}
+                    </div>
+                  )}
 
                   <div>
                     <p className="text-sm text-gray-500">Experience</p>

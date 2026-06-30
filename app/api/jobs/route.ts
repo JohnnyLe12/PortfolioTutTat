@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { successResponse, errorResponse } from '@/lib/response'
 import { jobFilterSchema } from '@/lib/validations/job'
 import { EmploymentType, SeniorityLevel, Prisma } from '@prisma/client'
+import { getAuthUser } from '@/lib/auth-guard'
 
 export async function GET(req: NextRequest) {
   try {
@@ -45,6 +46,23 @@ export async function GET(req: NextRequest) {
       page,
       limit,
     } = parsed.data
+
+    // Get current user and their applied job IDs (for filtering logic)
+    const user = await getAuthUser(req)
+    let userAppliedJobIds: string[] = []
+    if (user) {
+      const profile = await prisma.profile.findUnique({
+        where: { userId: user.userId },
+        select: { id: true },
+      })
+      if (profile) {
+        const userApplications = await prisma.application.findMany({
+          where: { menteeId: profile.id },
+          select: { jobId: true },
+        })
+        userAppliedJobIds = userApplications.map((a) => a.jobId)
+      }
+    }
 
     // Build Prisma where clause — all filters use AND logic
     const where: Prisma.JobWhereInput = {
@@ -193,6 +211,7 @@ export async function GET(req: NextRequest) {
           openSlots: true,
           category: true,
           createdAt: true,
+          updatedAt: true,
           company: {
             select: {
               id: true,
@@ -210,41 +229,73 @@ export async function GET(req: NextRequest) {
               },
             },
           },
+          _count: {
+            select: {
+              applications: {
+                where: {
+                  status: { in: ['submitted', 'under_review', 'accepted'] },
+                },
+              },
+            },
+          },
         },
       }),
     ])
 
-    // Shape the response: flatten company info
-    const jobList = jobs.map((job) => ({
-      id: job.id,
-      title: job.title,
-      description: job.description,
-      location: job.location,
-      jobType: job.jobType,
-      salaryMin: job.salaryMin,
-      salaryMax: job.salaryMax,
-      salaryCurrency: job.salaryCurrency,
-      salaryPeriod: job.salaryPeriod,
-      isRemote: job.isRemote,
-      requiredSkills: job.requiredSkills,
-      employmentType: job.employmentType,
-      seniorityLevel: job.seniorityLevel,
-      openSlots: job.openSlots,
-      category: job.category,
-      createdAt: job.createdAt,
-      company: {
-        id: job.company.id,
-        name: job.company.companyProfile?.companyName ?? job.company.profile?.fullName ?? job.company.email,
-        logoUrl: job.company.profile?.avatarUrl ?? null,
-      },
-    }))
+    // Calculate remaining slots and filter out stale full jobs
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+
+    const jobList = jobs
+      .map((job) => {
+        const activeApplicationCount = job._count.applications
+        const remainingSlots = job.openSlots !== null
+          ? Math.max(0, job.openSlots - activeApplicationCount)
+          : null
+        const isFull = remainingSlots !== null ? remainingSlots <= 0 : false
+
+        return {
+          id: job.id,
+          title: job.title,
+          description: job.description,
+          location: job.location,
+          jobType: job.jobType,
+          salaryMin: job.salaryMin,
+          salaryMax: job.salaryMax,
+          salaryCurrency: job.salaryCurrency,
+          salaryPeriod: job.salaryPeriod,
+          isRemote: job.isRemote,
+          requiredSkills: job.requiredSkills,
+          employmentType: job.employmentType,
+          seniorityLevel: job.seniorityLevel,
+          openSlots: job.openSlots,
+          remainingSlots,
+          isFull,
+          category: job.category,
+          createdAt: job.createdAt,
+          updatedAt: job.updatedAt,
+          company: {
+            id: job.company.id,
+            name: job.company.companyProfile?.companyName ?? job.company.profile?.fullName ?? job.company.email,
+            logoUrl: job.company.profile?.avatarUrl ?? null,
+          },
+        }
+      })
+      .filter((job) => {
+        // Keep jobs the user has applied to regardless of full/stale status
+        if (userAppliedJobIds.includes(job.id)) return true
+        // Filter out jobs that are full AND older than 7 days (based on updatedAt)
+        if (job.isFull && job.updatedAt && new Date(job.updatedAt) < sevenDaysAgo) {
+          return false
+        }
+        return true
+      })
 
     return successResponse({
       jobs: jobList,
-      total,
+      total: jobList.length,
       page,
       limit,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(jobList.length / limit),
     })
   } catch (err) {
     console.error('[GET /api/jobs]', err)
