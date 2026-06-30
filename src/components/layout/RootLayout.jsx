@@ -18,6 +18,8 @@ import {
   BookOpen,
   PlusCircle,
   ClipboardList,
+  Menu,
+  X,
 } from "lucide-react";
 
 import { apiGet, getAccessToken } from "../../lib/api";
@@ -28,6 +30,7 @@ export default function RootLayout() {
   const location = useLocation();
   const { t } = useLanguage();
   const [feedbackUnreadCount, setFeedbackUnreadCount] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isLandingPage =
     location.pathname === "/";
@@ -69,6 +72,8 @@ export default function RootLayout() {
     if (isDashboardRoute && getAccessToken()) {
       fetchFeedbackUnreadCount();
     }
+    // Close mobile sidebar on route change
+    setSidebarOpen(false);
   }, [isDashboardRoute, location.pathname]);
 
   async function fetchFeedbackUnreadCount() {
@@ -86,6 +91,17 @@ export default function RootLayout() {
       {!isAuthPage && (
         <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
           <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+            {/* MOBILE MENU BUTTON */}
+            {isDashboardRoute && (
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 mr-2"
+                aria-label="Toggle sidebar"
+              >
+                <Menu className="w-5 h-5 text-gray-700" />
+              </button>
+            )}
+
             {/* LOGO */}
             <Link
               to="/"
@@ -136,7 +152,34 @@ export default function RootLayout() {
 
       {/* CONTENT */}
       <div className="flex">
-        {/* SIDEBAR */}
+        {/* MOBILE SIDEBAR OVERLAY */}
+        {isDashboardRoute && sidebarOpen && (
+          <div className="fixed inset-0 z-40 lg:hidden">
+            <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
+            <aside className="fixed left-0 top-0 h-full w-64 bg-white border-r shadow-xl z-50 pt-16 overflow-y-auto">
+              <div className="flex items-center justify-between px-6 py-3 border-b">
+                <span className="font-semibold text-gray-700">Menu</span>
+                <button onClick={() => setSidebarOpen(false)} className="p-1 rounded hover:bg-gray-100">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <nav className="p-6 space-y-2">
+                <RoleSidebar
+                  role={userRole}
+                  pathname={location.pathname}
+                  feedbackUnreadCount={feedbackUnreadCount}
+                  t={t}
+                />
+                <div className="pt-4 mt-4 border-t space-y-2">
+                  <SidebarLink to="/settings" icon={<Settings />} text={t("nav.settings")} />
+                  <SidebarLink to="/" icon={<LogOut />} text={t("nav.logout")} />
+                </div>
+              </nav>
+            </aside>
+          </div>
+        )}
+
+        {/* DESKTOP SIDEBAR */}
         {isDashboardRoute && (
           <aside className="hidden lg:block w-64 min-h-screen bg-white border-r sticky top-16">
             <nav className="p-6 space-y-2">
