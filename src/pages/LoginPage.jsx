@@ -170,8 +170,8 @@ export default function LoginPage() {
                   <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
 
                   <input
-                    type="email"
-                    placeholder="you@example.com"
+                    type="text"
+                    placeholder="Email hoặc tên đăng nhập"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
