@@ -7,6 +7,7 @@ import { Button } from "../ui/button";
 import SocialLinksInput from "./SocialLinksInput";
 import AvatarUploader from "./AvatarUploader";
 import { apiGet, apiPut } from "../../lib/api";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const MAJOR_OPTIONS = [
   { value: "Graphic_Design", label: "Graphic Design" },
@@ -49,6 +50,7 @@ const INTEREST_OPTIONS = [
  * - className: optional wrapper className
  */
 export default function ProfileEditForm({ onSaveSuccess, className = "" }) {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -195,8 +197,8 @@ export default function ProfileEditForm({ onSaveSuccess, className = "" }) {
   return (
     <form onSubmit={handleSubmit} className={`bg-white border rounded-2xl p-6 shadow-sm ${className}`}>
       <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900">Edit Profile</h2>
-        <p className="text-sm text-gray-500 mt-1">Update your personal information and social links</p>
+        <h2 className="text-xl font-bold text-gray-900">{t("profile.edit.title")}</h2>
+        <p className="text-sm text-gray-500 mt-1">{t("profile.edit.subtitle")}</p>
       </div>
 
       {/* Success message */}
@@ -226,7 +228,7 @@ export default function ProfileEditForm({ onSaveSuccess, className = "" }) {
         {/* Full Name */}
         <div>
           <Label htmlFor="fullName" className="text-sm font-medium text-gray-700 mb-1.5">
-            Full Name <span className="text-red-500">*</span>
+            {t("profile.edit.fullName")} <span className="text-red-500">*</span>
           </Label>
           <Input
             id="fullName"
@@ -245,7 +247,7 @@ export default function ProfileEditForm({ onSaveSuccess, className = "" }) {
         {/* Bio */}
         <div>
           <Label htmlFor="bio" className="text-sm font-medium text-gray-700 mb-1.5">
-            Bio
+            {t("profile.edit.bio")}
           </Label>
           <Textarea
             id="bio"
@@ -263,7 +265,7 @@ export default function ProfileEditForm({ onSaveSuccess, className = "" }) {
         {/* Major (single select) */}
         <div>
           <Label htmlFor="major" className="text-sm font-medium text-gray-700 mb-1.5">
-            Major
+            {t("profile.edit.major")}
           </Label>
           <select
             id="major"
@@ -283,7 +285,7 @@ export default function ProfileEditForm({ onSaveSuccess, className = "" }) {
         {/* Skills (comma-separated input) */}
         <div>
           <Label htmlFor="skills" className="text-sm font-medium text-gray-700 mb-1.5">
-            Skills
+            {t("profile.edit.skills")}
           </Label>
           <Input
             id="skills"
@@ -298,7 +300,7 @@ export default function ProfileEditForm({ onSaveSuccess, className = "" }) {
         {/* Design Tools (multi-select toggle buttons) */}
         <div>
           <Label className="text-sm font-medium text-gray-700 mb-1.5">
-            Design Tools
+            {t("profile.edit.designTools")}
           </Label>
           <p className="text-xs text-gray-500 mb-3">Select the tools you're proficient with</p>
           <div className="flex flex-wrap gap-2">
@@ -326,7 +328,7 @@ export default function ProfileEditForm({ onSaveSuccess, className = "" }) {
         {/* Interests (multi-select toggle buttons) */}
         <div>
           <Label className="text-sm font-medium text-gray-700 mb-1.5">
-            Interests
+            {t("profile.edit.interests")}
           </Label>
           <p className="text-xs text-gray-500 mb-3">What type of design work excites you?</p>
           <div className="flex flex-wrap gap-2">
@@ -365,12 +367,12 @@ export default function ProfileEditForm({ onSaveSuccess, className = "" }) {
           {saving ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Saving...
+              {t("common.loading")}
             </>
           ) : (
             <>
               <Save className="w-4 h-4" />
-              Save Changes
+              {t("profile.edit.save")}
             </>
           )}
         </Button>

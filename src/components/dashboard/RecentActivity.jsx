@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Heart, Briefcase, Upload, MessageSquare, Bell } from "lucide-react";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 /**
  * Map notification type to icon and color classes.
@@ -93,6 +94,7 @@ function formatTimeAgo(dateStr) {
  */
 export default function RecentActivity({ activities = [], className = "" }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   // Strictly limit to 10 items maximum
   const displayItems = activities.slice(0, 10);
@@ -106,12 +108,12 @@ export default function RecentActivity({ activities = [], className = "" }) {
 
   return (
     <div className={`bg-white border rounded-2xl p-6 ${className}`}>
-      <h2 className="text-xl font-bold mb-2">Recent Activity</h2>
-      <p className="text-gray-500 text-sm mb-6">Your latest updates</p>
+      <h2 className="text-xl font-bold mb-2">{t("dashboard.recentActivity")}</h2>
+      <p className="text-gray-500 text-sm mb-6">{t("dashboard.recentActivity.subtitle")}</p>
 
       {displayItems.length === 0 ? (
         <p className="text-gray-400 text-sm text-center py-4">
-          No recent activity yet.
+          {t("dashboard.recentActivity.noActivity")}
         </p>
       ) : (
         <div className="space-y-4">

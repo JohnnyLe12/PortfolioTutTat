@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { MapPin, Briefcase, ArrowRight } from "lucide-react";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const JOB_TYPE_LABELS = {
   internship: "Internship",
@@ -20,13 +21,14 @@ const JOB_TYPE_LABELS = {
  * - className: optional wrapper className
  */
 export default function RecommendedJobs({ jobs = [], loading = false, className = "" }) {
+  const { t } = useLanguage();
   return (
     <div className={`bg-white border rounded-2xl p-6 ${className}`}>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-xl font-bold">Recommended Jobs</h2>
+          <h2 className="text-xl font-bold">{t("dashboard.recommendedJobs")}</h2>
           <p className="text-gray-500 text-sm">
-            Matches based on your skills
+            {t("dashboard.recommendedJobs.subtitle")}
           </p>
         </div>
 
@@ -34,7 +36,7 @@ export default function RecommendedJobs({ jobs = [], loading = false, className 
           to="/jobs"
           className="border px-4 py-2 rounded-lg text-sm hover:bg-gray-100 inline-flex items-center gap-1"
         >
-          Browse All
+          {t("dashboard.recommendedJobs.browseAll")}
           <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
@@ -63,9 +65,9 @@ export default function RecommendedJobs({ jobs = [], loading = false, className 
       ) : jobs.length === 0 ? (
         <div className="text-center py-8">
           <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">No recommended jobs found</p>
+          <p className="text-gray-500 text-sm">{t("dashboard.recommendedJobs.noJobs")}</p>
           <p className="text-gray-400 text-xs mt-1">
-            Complete your profile to get personalized recommendations
+            {t("dashboard.recommendedJobs.completeProfile")}
           </p>
         </div>
       ) : (
@@ -74,8 +76,8 @@ export default function RecommendedJobs({ jobs = [], loading = false, className 
             const companyInitial =
               job.company?.name?.charAt(0)?.toUpperCase() || "?";
             const locationDisplay = job.isRemote
-              ? "Remote"
-              : job.location || "Not specified";
+              ? t("job.remote")
+              : job.location || t("job.notSpecified");
 
             return (
               <Link

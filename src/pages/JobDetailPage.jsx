@@ -12,6 +12,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
+import { useLanguage } from "../contexts/LanguageContext";
+
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
@@ -70,6 +72,7 @@ function formatTimeAgo(dateStr) {
 
 export default function JobDetailPage() {
   const { id } = useParams();
+  const { t } = useLanguage();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -114,7 +117,7 @@ export default function JobDetailPage() {
           <Link to="/jobs">
             <Button variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Jobs
+              {t("job.backToJobs")}
             </Button>
           </Link>
         </div>
@@ -123,7 +126,7 @@ export default function JobDetailPage() {
   }
 
   const companyInitial = job.company?.name?.charAt(0)?.toUpperCase() || "?";
-  const locationDisplay = job.isRemote ? "Remote" : job.location || "Not specified";
+  const locationDisplay = job.isRemote ? t("job.remote") : job.location || t("job.notSpecified");
   const salaryDisplay = formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency);
 
   return (
@@ -136,7 +139,7 @@ export default function JobDetailPage() {
             className="inline-flex items-center gap-2 text-gray-600 hover:text-indigo-600 mb-8 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Jobs
+            {t("job.backToJobs")}
           </Link>
 
           <div className="grid lg:grid-cols-3 gap-12">
@@ -194,7 +197,7 @@ export default function JobDetailPage() {
                     onClick={() => setShowApplyDialog(true)}
                     className="flex-1 h-12 bg-indigo-600 hover:bg-indigo-700"
                   >
-                    Apply for this Position
+                    {t("job.applyPosition")}
                   </Button>
 
                   <BookmarkButton
@@ -211,7 +214,7 @@ export default function JobDetailPage() {
               {/* About the Role */}
               {job.description && (
                 <section>
-                  <h2 className="text-3xl font-bold mb-4">About the Role</h2>
+                  <h2 className="text-3xl font-bold mb-4">{t("job.aboutRole")}</h2>
                   <div className="space-y-4 text-gray-700 leading-relaxed whitespace-pre-line">
                     {job.description}
                   </div>
@@ -221,7 +224,7 @@ export default function JobDetailPage() {
               {/* Responsibilities */}
               {job.responsibilities?.length > 0 && (
                 <section>
-                  <h2 className="text-3xl font-bold mb-4">Responsibilities</h2>
+                  <h2 className="text-3xl font-bold mb-4">{t("job.responsibilities")}</h2>
                   <ul className="space-y-3 text-gray-700">
                     {job.responsibilities.map((item, idx) => (
                       <li key={idx} className="flex gap-3">
@@ -236,7 +239,7 @@ export default function JobDetailPage() {
               {/* Requirements */}
               {job.requirements?.length > 0 && (
                 <section>
-                  <h2 className="text-3xl font-bold mb-4">Requirements</h2>
+                  <h2 className="text-3xl font-bold mb-4">{t("job.requirements")}</h2>
                   <ul className="space-y-3 text-gray-700">
                     {job.requirements.map((req, idx) => (
                       <li key={idx} className="flex gap-3">
@@ -268,18 +271,18 @@ export default function JobDetailPage() {
               {/* Job Details */}
               <Card>
                 <CardContent className="p-6 space-y-4">
-                  <h3 className="font-bold">Job Details</h3>
+                  <h3 className="font-bold">{t("job.details")}</h3>
 
                   {/* Slot status */}
                   {job.openSlots !== null && job.openSlots !== undefined && (
                     <div>
-                      <p className="text-sm text-gray-500">Open Slots</p>
+                      <p className="text-sm text-gray-500">{t("job.openSlots")}</p>
                       {job.isFull ? (
-                        <p className="font-medium text-red-600">Full</p>
+                        <p className="font-medium text-red-600">{t("job.full")}</p>
                       ) : job.remainingSlots === 1 ? (
-                        <p className="font-medium text-yellow-600">1 slot remaining</p>
+                        <p className="font-medium text-yellow-600">1 {t("job.slotRemaining")}</p>
                       ) : job.remainingSlots !== null ? (
-                        <p className="font-medium text-green-600">{job.remainingSlots} slots remaining</p>
+                        <p className="font-medium text-green-600">{job.remainingSlots} {t("job.slotsRemaining")}</p>
                       ) : (
                         <p className="font-medium">{job.openSlots} slots</p>
                       )}
@@ -287,28 +290,28 @@ export default function JobDetailPage() {
                   )}
 
                   <div>
-                    <p className="text-sm text-gray-500">Experience</p>
+                    <p className="text-sm text-gray-500">{t("job.experience")}</p>
                     <p className="font-medium capitalize">
                       {job.experienceLevel || "Entry Level"}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500">Work Mode</p>
+                    <p className="text-sm text-gray-500">{t("job.workMode")}</p>
                     <p className="font-medium">
-                      {job.isRemote ? "Remote" : "On-site"}
+                      {job.isRemote ? t("job.remote") : t("job.onsite")}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500">Job Type</p>
+                    <p className="text-sm text-gray-500">{t("job.jobType")}</p>
                     <p className="font-medium">
                       {JOB_TYPE_LABELS[job.jobType] || job.jobType}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-500">Salary</p>
+                    <p className="text-sm text-gray-500">{t("job.salary")}</p>
                     <p className="font-medium">{salaryDisplay}</p>
                   </div>
 
@@ -325,7 +328,7 @@ export default function JobDetailPage() {
                 onClick={() => setShowApplyDialog(true)}
                 className="w-full h-12 bg-indigo-600 hover:bg-indigo-700"
               >
-                Apply Now
+                {t("job.applyNow")}
               </Button>
             </div>
           </div>

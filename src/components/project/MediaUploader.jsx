@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { Upload, Image, X } from "lucide-react";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const DEFAULT_ACCEPTED_TYPES = [
   "image/png",
@@ -34,6 +35,7 @@ export default function MediaUploader({
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef(null);
+  const { t } = useLanguage();
 
   const validateFiles = useCallback(
     (fileList) => {
@@ -148,10 +150,10 @@ export default function MediaUploader({
           </div>
 
           <h3 className="font-semibold text-lg text-gray-900 mb-2">
-            {isDragging ? "Drop files here" : "Drag & drop your images"}
+            {isDragging ? "Drop files here" : t("upload.dragDrop")}
           </h3>
 
-          <p className="text-gray-600 mb-4">or click to browse</p>
+          <p className="text-gray-600 mb-4">{t("upload.orBrowse")}</p>
 
           <input
             ref={fileInputRef}
@@ -167,14 +169,13 @@ export default function MediaUploader({
             <Button variant="outline" className="border-2" asChild>
               <span>
                 <Image className="h-4 w-4 mr-2" />
-                Choose Files
+                {t("upload.chooseFiles")}
               </span>
             </Button>
           </label>
 
           <p className="text-sm text-gray-500 mt-4">
-            PNG, JPG, JPEG, WEBP, GIF up to {maxSizeMB}MB each (max {maxFiles}{" "}
-            files)
+            {t("upload.fileFormats")}
           </p>
         </div>
       </div>
